@@ -76,7 +76,7 @@ export async function readContractMethod(
   return client.readContract({
     address: contractAddress as `0x${string}`,
     functionName: methodName,
-    args: args as import('genlayer-js') extends never ? never : unknown[],
+    args: args as unknown[],
   })
 }
 
