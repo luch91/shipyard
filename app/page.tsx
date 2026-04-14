@@ -52,7 +52,7 @@ export default function HomePage() {
         </h1>
 
         <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-neutral-500">
-          GenDeploy is the no-CLI deployment platform for{' '}
+          Shipyard is the no-CLI deployment platform for{' '}
           <span className="text-neutral-300">GenLayer Intelligent Contracts</span>. Upload your
           Python contract, pick a network, and deploy — no terminal required.
         </p>
@@ -84,7 +84,7 @@ export default function HomePage() {
             step={1}
             icon={Upload}
             title="Upload your contract"
-            description="Paste or drop a Python Intelligent Contract file. GenDeploy parses the constructor params automatically."
+            description="Paste or drop a Python Intelligent Contract file. Shipyard parses the constructor params automatically."
           />
           <StepCard
             step={2}

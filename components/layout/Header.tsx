@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ExternalLink, Zap } from 'lucide-react'
+import { ExternalLink, Anchor } from 'lucide-react'
 import clsx from 'clsx'
 
 const NAV_LINKS = [
@@ -19,8 +19,8 @@ export default function Header() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-mono text-lg font-semibold text-white">
-          <Zap size={18} className="text-emerald-400" />
-          <span>Gen<span className="text-emerald-400">Deploy</span></span>
+          <Anchor size={18} className="text-emerald-400" />
+          <span>Ship<span className="text-emerald-400">yard</span></span>
         </Link>
 
         {/* Nav */}

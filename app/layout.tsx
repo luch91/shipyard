@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GenDeploy — Deploy Intelligent Contracts',
+  title: 'Shipyard — Deploy Intelligent Contracts',
   description:
     'Browser-based deployment platform for GenLayer Intelligent Contracts. Deploy to Bradbury, Asimov, Studionet, or Localnet in under 60 seconds.',
 }
@@ -19,6 +19,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Sidebar />
           <main className="min-w-0 flex-1">{children}</main>
         </div>
+
+        {/* GenLayer logo — fixed bottom-right */}
+        <a
+          href="https://genlayer.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Powered by GenLayer"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/90 py-1.5 pl-1.5 pr-3 shadow-lg backdrop-blur-sm transition-all hover:border-neutral-600 hover:shadow-emerald-500/10"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://pbs.twimg.com/profile_images/2011221321754034176/AaBmFyfD_400x400.jpg"
+            alt="GenLayer"
+            width={22}
+            height={22}
+            className="rounded-full"
+          />
+          <span className="font-mono text-[11px] text-neutral-500">
+            Powered by <span className="text-neutral-300">GenLayer</span>
+          </span>
+        </a>
+
         <Toaster
           position="bottom-right"
           toastOptions={{
