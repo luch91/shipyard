@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Trash2, ExternalLink, History } from 'lucide-react'
 import clsx from 'clsx'
@@ -20,6 +21,7 @@ function timeAgo(ts: number): string {
 }
 
 export default function Sidebar() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(true)
   const [deployments, setDeployments] = useState<DeploymentRecord[]>([])
 
@@ -41,6 +43,8 @@ export default function Sidebar() {
       clearInterval(interval)
     }
   }, [])
+
+  if (pathname === '/') return null
 
   const clearHistory = () => {
     try {
