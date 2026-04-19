@@ -22,7 +22,19 @@ function WriteMethodCard({
 
   const handleExecute = () => {
     if (!privateKey.trim()) return
-    const argsArray = method.params.map((p) => args[p.name] ?? '')
+    const argsArray = method.params.map((p) => {
+      const raw = args[p.name] ?? ''
+      switch (p.type) {
+        case 'int': return raw === '' ? 0 : parseInt(raw, 10)
+        case 'float': return raw === '' ? 0.0 : parseFloat(raw)
+        case 'bool': return raw === 'true' || raw === 'True' || raw === '1'
+        case 'list':
+        case 'dict':
+          try { return JSON.parse(raw || (p.type === 'list' ? '[]' : '{}')) }
+          catch { return p.type === 'list' ? [] : {} }
+        default: return raw
+      }
+    })
     execute(privateKey, argsArray)
   }
 

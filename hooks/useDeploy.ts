@@ -71,18 +71,9 @@ export function useDeploy() {
 
     const onLog = (log: Omit<DeployLog, 'id' | 'timestamp'>) => addLog(log)
 
-    // Coerce string form values to typed values
-    const coerced = parsedContract
+    const argsForDeploy = parsedContract
       ? coerceArgs(constructorArgs, parsedContract.constructorParams)
-      : {}
-
-    // Convert back to string-keyed Record for the deploy function
-    // (genlayer-js takes positional args, coercion is for accuracy)
-    const argsForDeploy: Record<string, string> = {}
-    for (const [key, val] of Object.entries(coerced)) {
-      argsForDeploy[key] =
-        typeof val === 'string' ? val : JSON.stringify(val)
-    }
+      : constructorArgs
 
     setDeployStatus('deploying')
 

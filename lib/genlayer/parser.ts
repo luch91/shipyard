@@ -23,11 +23,29 @@ function parseClassName(source: string): string {
 // ─── Constructor Params ───────────────────────────────────────────────────────
 
 function parseConstructorParams(source: string): ContractParam[] {
-  // Match single-line __init__ signature
-  const initMatch = source.match(/def\s+__init__\s*\(self(?:,\s*([^)]+))?\)/)
-  if (!initMatch || !initMatch[1]) return []
+  // Find __init__( — handles both single-line and multi-line signatures
+  const startMatch = source.match(/def\s+__init__\s*\(/)
+  if (!startMatch || startMatch.index === undefined) return []
 
-  const paramStr = initMatch[1].trim()
+  // Walk forward to find the matching closing paren
+  const openIdx = startMatch.index + startMatch[0].length
+  let depth = 1
+  let closeIdx = openIdx
+  while (closeIdx < source.length && depth > 0) {
+    if (source[closeIdx] === '(') depth++
+    else if (source[closeIdx] === ')') depth--
+    if (depth > 0) closeIdx++
+  }
+
+  // Everything between the opening paren and its match, minus leading 'self'
+  const rawSig = source.slice(openIdx, closeIdx)
+  const afterSelf = rawSig.replace(/^\s*self\s*,?\s*/, '').trim()
+  if (!afterSelf) return []
+
+  // Flatten multi-line: collapse newlines + surrounding whitespace into a single space
+  const paramStr = afterSelf.replace(/\s*\n\s*/g, ' ').trim()
+  if (!paramStr) return []
+
   const params: ContractParam[] = []
 
   // Split on commas (naive — won't handle nested generics, acceptable per known limitation)
@@ -174,24 +192,32 @@ export function parseContract(source: string): ParsedContract {
 export interface ValidationResult {
   valid: boolean
   errors: string[]
+  warnings: string[]
 }
 
 export function validateContract(source: string): ValidationResult {
   const errors: string[] = []
+  const warnings: string[] = []
 
   if (!source.trim()) {
     errors.push('Contract source is empty.')
-    return { valid: false, errors }
+    return { valid: false, errors, warnings }
   }
 
   if (!source.includes('from genlayer import')) {
     errors.push('Missing required import: from genlayer import *')
   }
 
-  if (source.includes('py-genlayer:test')) {
-    errors.push(
-      'Dependency "py-genlayer:test" does not resolve on Bradbury. ' +
-      'Replace it with: # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }'
+  const dependsMatch = source.match(/\{\s*"Depends"\s*:\s*"py-genlayer:([^"]+)"\s*\}/)
+  if (!dependsMatch) {
+    warnings.push(
+      'No py-genlayer dependency comment found. If this contract fails to deploy on Bradbury, add this line at the top:\n' +
+      '# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }'
+    )
+  } else if (dependsMatch[1] !== '1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6') {
+    warnings.push(
+      `py-genlayer hash "${dependsMatch[1]}" may not resolve on Bradbury. If deployment fails, use the pinned hash:\n` +
+      '# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }'
     )
   }
 
@@ -203,5 +229,5 @@ export function validateContract(source: string): ValidationResult {
     errors.push('Contract must define an __init__ constructor.')
   }
 
-  return { valid: errors.length === 0, errors }
+  return { valid: errors.length === 0, errors, warnings }
 }

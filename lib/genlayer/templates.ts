@@ -42,7 +42,7 @@ class HelloWorld(gl.Contract):
 from genlayer import *
 
 class SimpleCounter(gl.Contract):
-    count: int
+    count: u64
     owner: str
 
     def __init__(self, start: int):
@@ -50,7 +50,7 @@ class SimpleCounter(gl.Contract):
         self.owner = gl.message.sender_address.as_hex
 
     @gl.public.view
-    def get_count(self) -> int:
+    def get_count(self) -> u64:
         return self.count
 
     @gl.public.write
@@ -289,8 +289,8 @@ from genlayer import *
 
 class SimpleDAO(gl.Contract):
     proposal: str
-    votes_for: int
-    votes_against: int
+    votes_for: u64
+    votes_against: u64
     finalized: bool
     owner: str
     has_voted: TreeMap[str, bool]
@@ -351,7 +351,7 @@ class Escrow(gl.Contract):
     buyer: str
     seller: str
     arbiter: str
-    amount: int
+    amount: u64
     description: str
     resolution_url: str
     released: bool
@@ -459,7 +459,7 @@ class WebDataAggregator(gl.Contract):
     summary: str
     source1: str
     source2: str
-    last_updated: int
+    last_updated: u64
 
     def __init__(self, topic: str):
         self.topic = topic
@@ -490,7 +490,11 @@ Respond ONLY with valid JSON: {{"summary": "<2-3 sentence synthesis>"}}"""
             parsed = json.loads(result)
             return parsed["summary"]
 
-        self.summary = gl.eq_principle.strict_eq(synthesize)
+        self.summary = gl.eq_principle.prompt_non_comparative(
+            synthesize,
+            task="Synthesize information about the topic from the two provided web sources.",
+            criteria="The summary must accurately reflect information from both sources about the topic in 2-3 coherent sentences."
+        )
         self.last_updated = gl.block.timestamp
 
     @gl.public.view
@@ -518,7 +522,7 @@ import json
 class TokenPriceTracker(gl.Contract):
     token_symbol: str
     price_usd: str
-    last_updated: int
+    last_updated: u64
     price_url: str
 
     def __init__(self, token_symbol: str, price_url: str):
@@ -542,7 +546,11 @@ Respond ONLY with valid JSON: {{"price": "<price as a decimal string, e.g. 1234.
             parsed = json.loads(result)
             return str(parsed["price"])
 
-        self.price_usd = gl.eq_principle.strict_eq(fetch_price)
+        self.price_usd = gl.eq_principle.prompt_non_comparative(
+            fetch_price,
+            task="Extract the current USD price of the token from the webpage content.",
+            criteria="The price must be a valid decimal number representing the current USD price of the token."
+        )
         self.last_updated = gl.block.timestamp
 
     @gl.public.view
@@ -554,7 +562,7 @@ Respond ONLY with valid JSON: {{"price": "<price as a decimal string, e.g. 1234.
         return self.token_symbol
 
     @gl.public.view
-    def get_last_updated(self) -> int:
+    def get_last_updated(self) -> u64:
         return self.last_updated
 `,
   },
@@ -607,7 +615,7 @@ Respond ONLY with valid JSON:
 }}"""
             result = gl.nondet.exec_prompt(prompt, response_format="json")
             parsed = json.loads(result)
-            return json.dumps({{"verdict": parsed["verdict"], "reasoning": parsed["reasoning"]}}, sort_keys=True)
+            return json.dumps({"verdict": parsed["verdict"], "reasoning": parsed["reasoning"]}, sort_keys=True)
 
         raw = gl.eq_principle.strict_eq(verify)
         parsed = json.loads(raw)
@@ -641,11 +649,11 @@ from genlayer import *
 
 class Crowdfunding(gl.Contract):
     title: str
-    goal: int
-    raised: int
+    goal: u64
+    raised: u64
     owner: str
     finalized: bool
-    contributions: TreeMap[str, int]
+    contributions: TreeMap[str, u64]
 
     def __init__(self, title: str, goal: int):
         self.title = title
@@ -675,7 +683,7 @@ class Crowdfunding(gl.Contract):
         return self.raised >= self.goal
 
     @gl.public.view
-    def get_contribution(self, addr: str) -> int:
+    def get_contribution(self, addr: str) -> u64:
         return self.contributions.get(addr, 0)
 
     @gl.public.write
@@ -701,10 +709,8 @@ class Crowdfunding(gl.Contract):
     source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from genlayer import *
 import json
-from dataclasses import dataclass
 
 @allow_storage
-@dataclass
 class Bet:
     game_id: str
     team1: str
@@ -714,9 +720,18 @@ class Bet:
     resolved: bool
     resolution_url: str
 
+    def __init__(self, game_id: str, team1: str, team2: str, predicted_winner: str, real_winner: str, resolved: bool, resolution_url: str):
+        self.game_id = game_id
+        self.team1 = team1
+        self.team2 = team2
+        self.predicted_winner = predicted_winner
+        self.real_winner = real_winner
+        self.resolved = resolved
+        self.resolution_url = resolution_url
+
 class SportsBetResolver(gl.Contract):
     bets: TreeMap[str, Bet]
-    points: TreeMap[str, int]
+    points: TreeMap[str, u64]
     owner: str
 
     def __init__(self):
@@ -777,11 +792,11 @@ Respond ONLY with valid JSON: {{"winner": "{bet.team1}" or "{bet.team2}" or "dra
             self.points[addr] = prev + 1
 
     @gl.public.view
-    def get_points(self, addr: str) -> int:
+    def get_points(self, addr: str) -> u64:
         return self.points.get(addr, 0)
 
     @gl.public.view
-    def get_my_points(self) -> int:
+    def get_my_points(self) -> u64:
         return self.points.get(gl.message.sender_address.as_hex, 0)
 `,
   },
@@ -855,22 +870,22 @@ import json
 class EvolvingStory(gl.Contract):
     title: str
     genre: str
+    opening: str
     chapters: DynArray[str]
-    chapter_count: int
+    chapter_count: u64
 
     def __init__(self, title: str, genre: str, opening: str):
         self.title = title
         self.genre = genre
-        self.chapter_count = 0
-        # Seed the story with the opening line
-        self.chapters.append(opening)
+        self.opening = opening
         self.chapter_count = 1
 
     @gl.public.write
     def add_chapter(self, prompt_hint: str):
         """Generate and append a new chapter using LLM, informed by the full story so far."""
+        all_chapters = [self.opening] + list(self.chapters)
         story_so_far = "\\n\\n".join(
-            [f"Chapter {i+1}: {c}" for i, c in enumerate(self.chapters)]
+            [f"Chapter {i+1}: {c}" for i, c in enumerate(all_chapters)]
         )
 
         def generate_chapter() -> str:
@@ -891,7 +906,11 @@ Respond ONLY with valid JSON: {{"chapter": "<the chapter text>"}}"""
             parsed = json.loads(result)
             return parsed["chapter"]
 
-        new_chapter = gl.eq_principle.strict_eq(generate_chapter)
+        new_chapter = gl.eq_principle.prompt_non_comparative(
+            generate_chapter,
+            task="Write the next chapter of the story that continues naturally and incorporates the suggestion.",
+            criteria="The chapter must continue naturally from the previous chapter, incorporate the suggestion thematically, and advance the plot meaningfully in 2-4 sentences."
+        )
         self.chapters.append(new_chapter)
         self.chapter_count += 1
 
@@ -899,17 +918,19 @@ Respond ONLY with valid JSON: {{"chapter": "<the chapter text>"}}"""
     def get_chapter(self, index: int) -> str:
         if index < 0 or index >= self.chapter_count:
             return ""
-        return self.chapters[index]
+        if index == 0:
+            return self.opening
+        return self.chapters[index - 1]
 
     @gl.public.view
     def get_full_story(self) -> str:
-        parts = [f"# {self.title}\\n"]
+        parts = [f"# {self.title}\\n", f"**Chapter 1:** {self.opening}"]
         for i, c in enumerate(self.chapters):
-            parts.append(f"**Chapter {i+1}:** {c}")
+            parts.append(f"**Chapter {i+2}:** {c}")
         return "\\n\\n".join(parts)
 
     @gl.public.view
-    def get_chapter_count(self) -> int:
+    def get_chapter_count(self) -> u64:
         return self.chapter_count
 `,
   },
@@ -929,10 +950,10 @@ import json
 class DigitalPet(gl.Contract):
     name: str
     species: str
-    hunger: int
-    happiness: int
-    energy: int
-    age_interactions: int
+    hunger: u64
+    happiness: u64
+    energy: u64
+    age_interactions: u64
     last_response: str
 
     def __init__(self, name: str, species: str):
@@ -968,7 +989,11 @@ Respond ONLY with valid JSON: {{"response": "<your reaction>"}}"""
             result = gl.nondet.exec_prompt(prompt, response_format="json")
             return json.loads(result)["response"]
 
-        self.last_response = gl.eq_principle.strict_eq(react)
+        self.last_response = gl.eq_principle.prompt_non_comparative(
+            react,
+            task="Generate the pet's in-character reaction to being fed.",
+            criteria="The response must be a short, cute, in-character 1-2 sentence reaction from the pet matching its current mood and stats."
+        )
 
     @gl.public.write
     def play(self):
@@ -990,7 +1015,11 @@ Respond ONLY with valid JSON: {{"response": "<your reaction>"}}"""
             result = gl.nondet.exec_prompt(prompt, response_format="json")
             return json.loads(result)["response"]
 
-        self.last_response = gl.eq_principle.strict_eq(react)
+        self.last_response = gl.eq_principle.prompt_non_comparative(
+            react,
+            task="Generate the pet's in-character reaction to playing with its owner.",
+            criteria="The response must be a short, joyful, in-character 1-2 sentence reaction from the pet matching its current mood and energy."
+        )
 
     @gl.public.write
     def rest(self):
@@ -1006,7 +1035,11 @@ Respond ONLY with valid JSON: {{"response": "<your reaction>"}}"""
             result = gl.nondet.exec_prompt(prompt, response_format="json")
             return json.loads(result)["response"]
 
-        self.last_response = gl.eq_principle.strict_eq(react)
+        self.last_response = gl.eq_principle.prompt_non_comparative(
+            react,
+            task="Generate the pet's in-character reaction to waking up from a nap.",
+            criteria="The response must be a short, sleepy, cute 1-sentence in-character reaction from the pet."
+        )
 
     @gl.public.view
     def get_stats(self) -> str:
@@ -1033,7 +1066,7 @@ import json
 class SelfUpdatingKnowledgeBase(gl.Contract):
     topic: str
     knowledge: str
-    sources_ingested: int
+    sources_ingested: u64
     source_log: DynArray[str]
 
     def __init__(self, topic: str):
@@ -1068,7 +1101,11 @@ Respond ONLY with valid JSON: {{"updated_knowledge": "<merged knowledge, max 400
             parsed = json.loads(result)
             return parsed["updated_knowledge"]
 
-        self.knowledge = gl.eq_principle.strict_eq(learn)
+        self.knowledge = gl.eq_principle.prompt_non_comparative(
+            learn,
+            task="Extract relevant information from the new source and merge it with the existing knowledge base.",
+            criteria="The updated knowledge must accurately reflect information from both the existing base and the new source, coherently merged with contradictions resolved, in under 400 words."
+        )
         self.sources_ingested += 1
 
     @gl.public.view
@@ -1076,7 +1113,7 @@ Respond ONLY with valid JSON: {{"updated_knowledge": "<merged knowledge, max 400
         return self.knowledge
 
     @gl.public.view
-    def get_sources_count(self) -> int:
+    def get_sources_count(self) -> u64:
         return self.sources_ingested
 
     @gl.public.view
@@ -1102,7 +1139,7 @@ class AdaptivePersona(gl.Contract):
     backstory: str
     personality_traits: str
     memories: DynArray[str]
-    interaction_count: int
+    interaction_count: u64
     last_reply: str
 
     def __init__(self, name: str, backstory: str, initial_traits: str):
@@ -1115,7 +1152,9 @@ class AdaptivePersona(gl.Contract):
     @gl.public.write
     def talk(self, message: str):
         """Have a conversation. The persona replies and its personality evolves from the exchange."""
-        recent_memories = list(self.memories[-5:]) if self.interaction_count > 0 else []
+        mem_count = len(self.memories)
+        start = max(0, mem_count - 5)
+        recent_memories = [self.memories[i] for i in range(start, mem_count)] if self.interaction_count > 0 else []
         memories_text = "\\n".join(recent_memories) if recent_memories else "No prior conversations."
         current_traits = self.personality_traits
 
@@ -1140,7 +1179,11 @@ Respond ONLY with valid JSON:
             result = gl.nondet.exec_prompt(prompt, response_format="json")
             return result
 
-        raw = gl.eq_principle.strict_eq(respond)
+        raw = gl.eq_principle.prompt_non_comparative(
+            respond,
+            task="Generate an in-character reply from the persona and reflect on personality evolution.",
+            criteria="The response must be valid JSON with 'reply' (2-3 sentence in-character response), 'memory' (one sentence summary of the exchange), and 'trait_evolution' (one subtle personality update)."
+        )
         parsed = json.loads(raw)
 
         self.last_reply = parsed["reply"]
@@ -1159,7 +1202,7 @@ Respond ONLY with valid JSON:
         return self.personality_traits
 
     @gl.public.view
-    def get_interaction_count(self) -> int:
+    def get_interaction_count(self) -> u64:
         return self.interaction_count
 
     @gl.public.view
@@ -1305,8 +1348,8 @@ import json
 class LivingConstitution(gl.Contract):
     name: str
     constitution: str
-    version: int
-    amendment_count: int
+    version: u64
+    amendment_count: u64
     owner: str
     amendment_log: DynArray[str]
 
@@ -1352,7 +1395,11 @@ Respond ONLY with valid JSON:
             result = gl.nondet.exec_prompt(prompt, response_format="json")
             return result
 
-        raw = gl.eq_principle.strict_eq(evaluate_and_amend)
+        raw = gl.eq_principle.prompt_non_comparative(
+            evaluate_and_amend,
+            task="Evaluate a proposed constitutional amendment and rewrite the constitution if approved.",
+            criteria="The response must be valid JSON with 'approved' (boolean), 'score' (integer 1-10), 'reasoning' (one sentence), and 'updated_constitution' (full text or original if rejected)."
+        )
         parsed = json.loads(raw)
 
         log_entry = f"v{self.version} — Proposal: '{proposal}' | {'APPROVED' if parsed['approved'] else 'REJECTED'} (score: {parsed['score']}/10) | {parsed['reasoning']}"
@@ -1368,7 +1415,7 @@ Respond ONLY with valid JSON:
         return self.constitution
 
     @gl.public.view
-    def get_version(self) -> int:
+    def get_version(self) -> u64:
         return self.version
 
     @gl.public.view
@@ -1376,7 +1423,7 @@ Respond ONLY with valid JSON:
         return "\\n".join(self.amendment_log)
 
     @gl.public.view
-    def get_amendment_count(self) -> int:
+    def get_amendment_count(self) -> u64:
         return self.amendment_count
 `,
   },

@@ -16,6 +16,9 @@ export async function deployContract(options: DeployOptions): Promise<DeployResu
     throw new Error(msg)
   }
   onLog({ level: 'success', message: 'Contract source is valid.' })
+  for (const warning of validation.warnings) {
+    onLog({ level: 'warn', message: warning })
+  }
 
   // 2. Create signer client
   onLog({ level: 'info', message: `Connecting to ${networkId}...` })

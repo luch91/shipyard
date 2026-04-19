@@ -72,7 +72,7 @@ export interface DeployState {
 
 export interface DeployOptions {
   contractSource: string
-  constructorArgs: Record<string, string>
+  constructorArgs: Record<string, unknown>
   networkId: NetworkId
   privateKey: string
   onLog: (log: Omit<DeployLog, 'id' | 'timestamp'>) => void
