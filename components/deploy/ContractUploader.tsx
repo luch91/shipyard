@@ -15,6 +15,7 @@ export default function ContractUploader() {
   const { contractSource, setContractSource, setParsedContract } = useDeployStore()
   const [isDragging, setIsDragging] = useState(false)
   const [showEditor, setShowEditor] = useState(!!contractSource)
+  const [parseError, setParseError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadSource = useCallback(
@@ -23,9 +24,11 @@ export default function ContractUploader() {
       const validation = validateContract(source)
       if (validation.valid) {
         setParsedContract(parseContract(source))
+        setParseError(null)
         toast.success('Contract parsed successfully.')
       } else {
         setParsedContract(null)
+        setParseError(validation.errors[0] ?? 'Invalid contract.')
         toast.error(validation.errors[0] ?? 'Invalid contract.')
       }
       setShowEditor(true)
@@ -87,8 +90,10 @@ export default function ContractUploader() {
       const validation = validateContract(source)
       if (validation.valid) {
         setParsedContract(parseContract(source))
+        setParseError(null)
       } else {
         setParsedContract(null)
+        setParseError(source.trim() ? (validation.errors[0] ?? 'Contract could not be parsed.') : null)
       }
     },
     [setContractSource, setParsedContract]
@@ -139,6 +144,7 @@ export default function ContractUploader() {
               onClick={() => {
                 setContractSource('')
                 setParsedContract(null)
+                setParseError(null)
                 setShowEditor(false)
               }}
               className="ml-auto text-xs text-neutral-600 hover:text-neutral-400"
@@ -164,6 +170,11 @@ export default function ContractUploader() {
               padding: { top: 12 },
             }}
           />
+          {parseError && (
+            <div className="border-t border-red-500/20 bg-red-500/5 px-3 py-2 font-mono text-xs text-red-400">
+              ✗ {parseError}
+            </div>
+          )}
         </div>
       ) : (
         <div
