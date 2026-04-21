@@ -66,12 +66,13 @@ export function useWallet() {
           const ephemeral = await createEphemeralClient(selectedNetwork)
           address = ephemeral.address
         } else {
-          // Import from private key
-          if (!isValidPrivateKey(privateKey)) {
-            throw new Error('Invalid private key. Must be a 0x-prefixed 64-character hex string.')
+          // Import from private key — normalize 0x prefix
+          const normalized = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`
+          if (!isValidPrivateKey(normalized)) {
+            throw new Error('Invalid private key. Must be a 64-character hex string.')
           }
           const genlayerJs = await import('genlayer-js')
-          const account = genlayerJs.createAccount(privateKey as `0x${string}`)
+          const account = genlayerJs.createAccount(normalized as `0x${string}`)
           address = account.address as string
         }
 

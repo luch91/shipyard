@@ -40,7 +40,8 @@ export async function createSignerClient(
 ): Promise<GenLayerClient> {
   const { createClient, createAccount } = await import('genlayer-js')
   const chain = await getChain(networkId)
-  const account = createAccount(privateKey as `0x${string}`)
+  const normalized = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`
+  const account = createAccount(normalized as `0x${string}`)
   return createClient({ chain, account })
 }
 

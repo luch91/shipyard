@@ -10,6 +10,7 @@ export const NETWORKS: Record<NetworkId, Network> = {
     chainId: 17180,
     isLive: true,
     description: 'Experimental LLM inference testnet — primary deployment target',
+    explorerUrl: 'https://explorer-bradbury.genlayer.com',
   },
   'testnet-asimov': {
     id: 'testnet-asimov',
@@ -18,6 +19,7 @@ export const NETWORKS: Record<NetworkId, Network> = {
     chainId: 17181,
     isLive: true,
     description: 'Validator onboarding testnet',
+    explorerUrl: 'https://explorer-asimov.genlayer.com',
   },
   studionet: {
     id: 'studionet',

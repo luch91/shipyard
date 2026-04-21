@@ -13,6 +13,7 @@ export interface Network {
   chainId: number
   isLive: boolean
   description: string
+  explorerUrl?: string
 }
 
 // ─── Contract Parsing ────────────────────────────────────────────────────────

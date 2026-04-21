@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, Copy, ExternalLink } from 'lucide-react'
 import clsx from 'clsx'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { useDeploy } from '@/hooks/useDeploy'
+import { NETWORKS } from '@/lib/genlayer/networks'
 import type { DeployLog } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -133,15 +134,45 @@ export default function DeployLogs() {
             )}
             <CopyLine label="Transaction Hash" value={deploy.result.transactionHash} />
           </div>
-          {deploy.result.contractAddress && (
-            <a
-              href={`/interact/${deploy.result.contractAddress}`}
-              className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-400 hover:underline"
-            >
-              <ExternalLink size={12} />
-              Interact with this contract
-            </a>
-          )}
+          <div className="mt-3 flex flex-col gap-1.5">
+            {deploy.result.contractAddress && (
+              <a
+                href={`/interact/${deploy.result.contractAddress}`}
+                className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 hover:underline"
+              >
+                <ExternalLink size={12} />
+                Interact with this contract
+              </a>
+            )}
+            {(() => {
+              const explorerUrl = NETWORKS[deploy.result.network]?.explorerUrl
+              if (!explorerUrl) return null
+              return (
+                <>
+                  {deploy.result.contractAddress && (
+                    <a
+                      href={`${explorerUrl}/address/${deploy.result.contractAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-medium text-neutral-400 hover:text-neutral-200 hover:underline"
+                    >
+                      <ExternalLink size={12} />
+                      View contract on explorer
+                    </a>
+                  )}
+                  <a
+                    href={`${explorerUrl}/tx/${deploy.result.transactionHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs font-medium text-neutral-400 hover:text-neutral-200 hover:underline"
+                  >
+                    <ExternalLink size={12} />
+                    View transaction on explorer
+                  </a>
+                </>
+              )
+            })()}
+          </div>
         </div>
       )}
 
