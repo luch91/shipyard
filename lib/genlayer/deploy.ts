@@ -78,7 +78,7 @@ export async function deployContract(options: DeployOptions): Promise<DeployResu
     // Contract address lives in txDataDecoded for deploy transactions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const decoded = (receipt as any)?.txDataDecoded
-    contractAddress = decoded?.contractAddress ?? (receipt as { contractAddress?: string })?.contractAddress ?? ''
+    contractAddress = decoded?.contractAddress ?? (receipt as any)?.recipient ?? ''
 
     onLog({ level: 'success', message: `Contract deployed at: ${contractAddress}` })
   } catch (err) {
