@@ -137,7 +137,7 @@ export default function DeployLogs() {
           <div className="mt-3 flex flex-col gap-1.5">
             {deploy.result.contractAddress && (
               <a
-                href={`/interact/${deploy.result.contractAddress}`}
+                href={`/interact/${deploy.result.contractAddress}?network=${deploy.result.network}`}
                 className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 hover:underline"
               >
                 <ExternalLink size={12} />

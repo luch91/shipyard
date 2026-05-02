@@ -101,7 +101,7 @@ export default function Sidebar() {
                 {deployments.map((d, i) => (
                   <li key={`${d.address}-${i}`}>
                     <Link
-                      href={`/interact/${d.address}`}
+                      href={`/interact/${d.address}?network=${d.network}`}
                       className="group flex flex-col gap-1 rounded-md px-2 py-2 transition-colors hover:bg-neutral-800/60"
                     >
                       <div className="flex items-center justify-between gap-1">
