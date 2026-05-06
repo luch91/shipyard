@@ -100,7 +100,7 @@ function parseMethods(source: string): ContractMethod[] {
 
   // Match @gl.public.view or @gl.public.write followed by a def on the next line(s)
   const methodRegex =
-    /(@gl\.public\.(view|write))\s*\ndef\s+(\w+)\s*\(self(?:,\s*([^)]*))?\)\s*(?:->\s*([\w\[\], ]+?))?\s*:/gm
+    /(@gl\.public\.(view|write))\s*\n\s*def\s+(\w+)\s*\(self(?:,\s*([^)]*))?\)\s*(?:->\s*([\w\[\], ]+?))?\s*:/gm
 
   let match: RegExpExecArray | null
   while ((match = methodRegex.exec(source)) !== null) {
