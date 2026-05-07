@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import LZString from 'lz-string'
 import { useDeployStore } from '@/hooks/useDeployStore'
@@ -13,12 +13,11 @@ import DeployLogs from '@/components/deploy/DeployLogs'
 import FaucetWidget from '@/components/deploy/FaucetWidget'
 import ContractDiff from '@/components/deploy/ContractDiff'
 
-export default function DeployPage() {
+// Isolated so useSearchParams is inside a Suspense boundary (Next.js 14 requirement)
+function SourceLoader() {
   const searchParams = useSearchParams()
-  const { contractSource, parsedContract, setContractSource, setParsedContract } = useDeployStore()
-  const [prevSource, setPrevSource] = useState<string | null>(null)
+  const { setContractSource, setParsedContract } = useDeployStore()
 
-  // Pre-load source from ?source= URL param (URL-encoded source sharing)
   useEffect(() => {
     const encoded = searchParams.get('source')
     if (!encoded) return
@@ -31,13 +30,19 @@ export default function DeployPage() {
     }
   }, [searchParams, setContractSource, setParsedContract])
 
+  return null
+}
+
+export default function DeployPage() {
+  const { contractSource, parsedContract } = useDeployStore()
+  const [prevSource, setPrevSource] = useState<string | null>(null)
+
   // Check if this contract was previously deployed and source differs
   useEffect(() => {
     if (!parsedContract?.className || !contractSource) {
       setPrevSource(null)
       return
     }
-    // Look for any deployment with this contract name
     try {
       const history = JSON.parse(localStorage.getItem('gendeploy:deployments') ?? '[]')
       const match = history.find(
@@ -61,6 +66,10 @@ export default function DeployPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      <Suspense fallback={null}>
+        <SourceLoader />
+      </Suspense>
+
       <div className="mb-6">
         <h1 className="font-mono text-xl font-bold text-white">Deploy a Contract</h1>
         <p className="mt-1 text-sm text-neutral-500">
