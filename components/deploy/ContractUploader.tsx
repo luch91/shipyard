@@ -1,11 +1,12 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Upload, Clipboard, FileCode } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import clsx from 'clsx'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
+import { track } from '@/lib/analytics'
 import toast from 'react-hot-toast'
 
 // Monaco is heavy — load it lazily, only in this component (per CLAUDE.md rule)
@@ -18,18 +19,26 @@ export default function ContractUploader() {
   const [parseError, setParseError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Show editor when source is set externally (URL param, fork, template)
+  useEffect(() => {
+    if (contractSource) setShowEditor(true)
+  }, [contractSource])
+
   const loadSource = useCallback(
-    (source: string) => {
+    (source: string, method: 'file' | 'paste') => {
       setContractSource(source)
       const validation = validateContract(source)
       if (validation.valid) {
-        setParsedContract(parseContract(source))
+        const parsed = parseContract(source)
+        setParsedContract(parsed)
         setParseError(null)
         toast.success('Contract parsed successfully.')
+        track('contract_loaded', { method, contract_name: parsed.className, has_errors: false })
       } else {
         setParsedContract(null)
         setParseError(validation.errors[0] ?? 'Invalid contract.')
         toast.error(validation.errors[0] ?? 'Invalid contract.')
+        track('contract_loaded', { method, contract_name: null, has_errors: true })
       }
       setShowEditor(true)
     },
@@ -49,7 +58,7 @@ export default function ContractUploader() {
         return
       }
       const reader = new FileReader()
-      reader.onload = (ev) => loadSource((ev.target?.result as string) ?? '')
+      reader.onload = (ev) => loadSource((ev.target?.result as string) ?? '', 'file')
       reader.readAsText(file)
     },
     [loadSource]
@@ -60,7 +69,7 @@ export default function ContractUploader() {
       const file = e.target.files?.[0]
       if (!file) return
       const reader = new FileReader()
-      reader.onload = (ev) => loadSource((ev.target?.result as string) ?? '')
+      reader.onload = (ev) => loadSource((ev.target?.result as string) ?? '', 'file')
       reader.readAsText(file)
     },
     [loadSource]
@@ -75,7 +84,7 @@ export default function ContractUploader() {
         toast.error('Clipboard is empty.')
         return
       }
-      loadSource(text)
+      loadSource(text, 'paste')
     } catch {
       toast.error('Could not read clipboard. Please paste manually into the editor.')
     }
@@ -146,6 +155,7 @@ export default function ContractUploader() {
                 setParsedContract(null)
                 setParseError(null)
                 setShowEditor(false)
+                track('contract_cleared', {})
               }}
               className="ml-auto text-xs text-neutral-600 hover:text-neutral-400"
               aria-label="Clear contract source"

@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import LZString from 'lz-string'
 import { useDeployStore } from '@/hooks/useDeployStore'
+import { parseContract, validateContract } from '@/lib/genlayer/parser'
 import { hasDiff } from '@/lib/diff'
 import ContractUploader from '@/components/deploy/ContractUploader'
 import NetworkSelector from '@/components/deploy/NetworkSelector'
@@ -11,8 +14,22 @@ import FaucetWidget from '@/components/deploy/FaucetWidget'
 import ContractDiff from '@/components/deploy/ContractDiff'
 
 export default function DeployPage() {
-  const { contractSource, parsedContract } = useDeployStore()
+  const searchParams = useSearchParams()
+  const { contractSource, parsedContract, setContractSource, setParsedContract } = useDeployStore()
   const [prevSource, setPrevSource] = useState<string | null>(null)
+
+  // Pre-load source from ?source= URL param (URL-encoded source sharing)
+  useEffect(() => {
+    const encoded = searchParams.get('source')
+    if (!encoded) return
+    const decoded = LZString.decompressFromEncodedURIComponent(encoded)
+    if (!decoded) return
+    const validation = validateContract(decoded)
+    if (validation.valid) {
+      setContractSource(decoded)
+      setParsedContract(parseContract(decoded))
+    }
+  }, [searchParams, setContractSource, setParsedContract])
 
   // Check if this contract was previously deployed and source differs
   useEffect(() => {

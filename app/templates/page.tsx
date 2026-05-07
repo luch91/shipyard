@@ -7,6 +7,7 @@ import clsx from 'clsx'
 import { TEMPLATES } from '@/lib/genlayer/templates'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { parseContract } from '@/lib/genlayer/parser'
+import { track } from '@/lib/analytics'
 import type { ContractTemplate, TemplateDifficulty } from '@/types'
 
 const DIFFICULTY_COLORS: Record<TemplateDifficulty, string> = {
@@ -23,6 +24,7 @@ function TemplateCard({ template }: { template: ContractTemplate }) {
   const handleUse = () => {
     setContractSource(template.source)
     setParsedContract(parseContract(template.source))
+    track('template_selected', { template_name: template.name, difficulty: template.difficulty, tags: template.tags })
     router.push('/deploy')
   }
 

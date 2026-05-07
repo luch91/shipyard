@@ -1,8 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
+import { GitFork, Share2 } from 'lucide-react'
+import LZString from 'lz-string'
+import toast from 'react-hot-toast'
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
+import { useDeployStore } from '@/hooks/useDeployStore'
+import { track } from '@/lib/analytics'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import CopyButton from '@/components/ui/CopyButton'
 import ReadMethods from './ReadMethods'
@@ -53,8 +59,30 @@ interface ContractPanelProps {
 }
 
 export default function ContractPanel({ address, networkId }: ContractPanelProps) {
+  const router = useRouter()
+  const { setContractSource } = useDeployStore()
   const [parsed, setParsed] = useState<ParsedContract | null>(null)
   const [activeTab, setActiveTab] = useState<'read' | 'write'>('read')
+
+  const handleFork = () => {
+    if (!parsed) return
+    setContractSource(parsed.raw)
+    track('contract_forked', { contract_name: parsed.className, address })
+    router.push('/deploy')
+  }
+
+  const handleShareSource = async () => {
+    if (!parsed) return
+    const encoded = LZString.compressToEncodedURIComponent(parsed.raw)
+    const url = `${window.location.origin}/deploy?source=${encoded}`
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('Deployable link copied!')
+      track('source_link_shared', { contract_name: parsed.className, address })
+    } catch {
+      toast.error('Could not copy link.')
+    }
+  }
 
   useEffect(() => {
     try {
@@ -100,13 +128,31 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
                 {readMethods.length}r / {writeMethods.length}w
               </span>
             </span>
-            <button
-              type="button"
-              onClick={() => setParsed(null)}
-              className="text-xs text-neutral-600 hover:text-neutral-400 focus:outline-none"
-            >
-              change source
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleFork}
+                className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-400 focus:outline-none"
+              >
+                <GitFork size={11} />
+                fork
+              </button>
+              <button
+                type="button"
+                onClick={handleShareSource}
+                className="flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-300 focus:outline-none"
+              >
+                <Share2 size={11} />
+                share
+              </button>
+              <button
+                type="button"
+                onClick={() => setParsed(null)}
+                className="text-xs font-bold text-yellow-500 hover:text-yellow-300 focus:outline-none"
+              >
+                change source
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}

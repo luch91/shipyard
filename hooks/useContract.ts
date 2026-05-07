@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { readContractMethod, writeContractMethod } from '@/lib/genlayer/client'
 import { useDeployStore } from './useDeployStore'
+import { track } from '@/lib/analytics'
 import type { NetworkId } from '@/types'
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ export function useReadMethod(contractAddress: string, methodName: string) {
       setLoading(true)
       setResult(null)
       setError(null)
+      track('read_method_called', { method_name: methodName, network: networkOverride ?? selectedNetwork })
       try {
         const network = networkOverride ?? selectedNetwork
         const res = await readContractMethod(network, contractAddress, methodName, args)
@@ -48,6 +50,7 @@ export function useWriteMethod(contractAddress: string, methodName: string) {
       setLoading(true)
       setTxHash(null)
       setError(null)
+      track('write_method_executed', { method_name: methodName, network: networkOverride ?? selectedNetwork })
       try {
         const network = networkOverride ?? selectedNetwork
         const hash = await writeContractMethod(network, privateKey, contractAddress, methodName, args)

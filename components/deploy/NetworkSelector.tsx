@@ -3,6 +3,7 @@
 import { getAllNetworks } from '@/lib/genlayer/networks'
 import { NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
 import { useDeployStore } from '@/hooks/useDeployStore'
+import { track } from '@/lib/analytics'
 import type { NetworkId } from '@/types'
 import clsx from 'clsx'
 
@@ -22,7 +23,10 @@ export default function NetworkSelector() {
             <button
               key={network.id}
               type="button"
-              onClick={() => setSelectedNetwork(network.id as NetworkId)}
+              onClick={() => {
+                setSelectedNetwork(network.id as NetworkId)
+                track('network_selected', { network_id: network.id, network_name: network.name })
+              }}
               className={clsx(
                 'relative flex flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
                 isSelected

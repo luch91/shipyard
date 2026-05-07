@@ -2,6 +2,7 @@
 
 import { useDeployStore } from './useDeployStore'
 import { deployContract } from '@/lib/genlayer/deploy'
+import { track } from '@/lib/analytics'
 import type { DeployLog } from '@/types'
 
 // ─── Arg Coercion ─────────────────────────────────────────────────────────────
@@ -66,8 +67,17 @@ export function useDeploy() {
   async function run(privateKey: string) {
     if (!canDeploy) return
 
+    const startTime = Date.now()
+    const contractName = parsedContract?.className ?? 'Unknown'
+
     resetDeploy()
     setDeployStatus('validating')
+
+    track('deployment_started', {
+      network: selectedNetwork,
+      contract_name: contractName,
+      has_constructor_args: Object.keys(constructorArgs).length > 0,
+    })
 
     const onLog = (log: Omit<DeployLog, 'id' | 'timestamp'>) => addLog(log)
 
@@ -89,10 +99,17 @@ export function useDeploy() {
       // Attach contract name from parsed contract
       const enriched = {
         ...result,
-        contractName: parsedContract?.className ?? 'Unknown',
+        contractName,
       }
 
       setDeployResult(enriched)
+
+      track('deployment_succeeded', {
+        network: selectedNetwork,
+        contract_name: enriched.contractName,
+        contract_address: enriched.contractAddress,
+        duration_ms: Date.now() - startTime,
+      })
 
       // Persist to deployment history in localStorage
       try {
@@ -118,6 +135,12 @@ export function useDeploy() {
       const message =
         err instanceof Error ? err.message : 'An unexpected error occurred.'
       setDeployError(message)
+
+      track('deployment_failed', {
+        network: selectedNetwork,
+        contract_name: contractName,
+        error: message,
+      })
     }
   }
 

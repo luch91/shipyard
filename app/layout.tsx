@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { Toaster } from 'react-hot-toast'
 import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
+import { PostHogProvider } from '@/components/providers/PostHogProvider'
+import { PostHogPageView } from '@/components/providers/PostHogPageView'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -14,6 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-neutral-950 font-sans antialiased">
+        <PostHogProvider>
+        <Suspense><PostHogPageView /></Suspense>
         <Header />
         <div className="flex" style={{ minHeight: 'calc(100vh - 56px)' }}>
           <Sidebar />
@@ -59,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             },
           }}
         />
+        </PostHogProvider>
       </body>
     </html>
   )

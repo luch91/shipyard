@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Droplets, ExternalLink, CheckCircle } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { useDeployStore } from '@/hooks/useDeployStore'
+import { track } from '@/lib/analytics'
 import type { NetworkId } from '@/types'
 
 const FAUCET_NETWORKS: NetworkId[] = ['testnet-bradbury', 'testnet-asimov']
@@ -33,6 +34,7 @@ export default function FaucetWidget() {
   const handleClaim = async () => {
     setClaiming(true)
     setError('')
+    track('faucet_claimed', { network: selectedNetwork })
     try {
       const res = await fetch(faucetUrl)
       if (res.ok) {

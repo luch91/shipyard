@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Trash2, ExternalLink, History } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, ExternalLink, History, Download, Upload } from 'lucide-react'
 import clsx from 'clsx'
+import toast from 'react-hot-toast'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import type { DeploymentRecord, NetworkId } from '@/types'
 
@@ -24,6 +25,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(true)
   const [deployments, setDeployments] = useState<DeploymentRecord[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Load from localStorage
   useEffect(() => {
@@ -53,6 +55,62 @@ export default function Sidebar() {
     } catch { /* non-fatal */ }
   }
 
+  const exportHistory = () => {
+    try {
+      const sources: Record<string, string> = {}
+      for (const d of deployments) {
+        const src = localStorage.getItem(`gendeploy:source:${d.address}`)
+        if (src) sources[d.address] = src
+      }
+      const data = { version: 1, exportedAt: Date.now(), deployments, sources }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `shipyard-history-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch { /* non-fatal */ }
+  }
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string)
+        if (!Array.isArray(data.deployments)) {
+          toast.error('Invalid history file.')
+          return
+        }
+        // Write sources only if not already cached
+        if (data.sources && typeof data.sources === 'object') {
+          for (const [address, src] of Object.entries(data.sources)) {
+            if (typeof src === 'string' && !localStorage.getItem(`gendeploy:source:${address}`)) {
+              localStorage.setItem(`gendeploy:source:${address}`, src)
+            }
+          }
+        }
+        // Merge — deduplicate by address, sort newest first, cap at 50
+        const existingAddresses = new Set(deployments.map((d) => d.address))
+        const incoming = (data.deployments as DeploymentRecord[]).filter(
+          (d) => d.address && d.contractName && d.network && d.deployedAt && !existingAddresses.has(d.address)
+        )
+        const merged = [...deployments, ...incoming]
+          .sort((a, b) => b.deployedAt - a.deployedAt)
+          .slice(0, 50)
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(merged))
+        setDeployments(merged)
+        toast.success(`Imported ${incoming.length} deployment${incoming.length !== 1 ? 's' : ''}.`)
+      } catch {
+        toast.error('Could not read history file.')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   return (
     <aside
       className={clsx(
@@ -78,16 +136,43 @@ export default function Sidebar() {
               <History size={13} className="text-neutral-500" />
               <span className="font-mono text-xs font-semibold text-neutral-400">Deployments</span>
             </div>
-            {deployments.length > 0 && (
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={clearHistory}
-                className="text-neutral-700 hover:text-red-400 focus:outline-none"
-                aria-label="Clear deployment history"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
+                aria-label="Import deployment history"
               >
-                <Trash2 size={12} />
+                <Upload size={14} strokeWidth={2.5} />
               </button>
-            )}
+              {deployments.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={exportHistory}
+                    className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
+                    aria-label="Export deployment history"
+                  >
+                    <Download size={14} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearHistory}
+                    className="text-neutral-400 hover:text-red-400 focus:outline-none"
+                    aria-label="Clear deployment history"
+                  >
+                    <Trash2 size={14} strokeWidth={2.5} />
+                  </button>
+                </>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleImportFile}
+              className="hidden"
+            />
           </div>
 
           {/* List */}
