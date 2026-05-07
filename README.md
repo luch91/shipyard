@@ -27,6 +27,10 @@ Shipyard is the "Thirdweb for GenLayer" — a fully client-side web app that rem
 - **4 networks** — Testnet Bradbury, Testnet Asimov, Studionet, Localnet
 - **Live deploy logs** — streaming terminal output during deployment
 - **Interact page** — call read and write methods on any deployed contract
+- **One-click fork** — load any deployed contract's source into the editor from the interact page, ready to modify and redeploy
+- **Shareable deploy links** — network-aware interact URLs (`/interact/0xabc?network=bradbury`) that pre-select the correct network when shared
+- **URL-encoded source sharing** — share a `/deploy?source=<compressed>` link; anyone opening it gets the contract source pre-loaded in the editor, no backend required
+- **Export and import deployment history** — export your full history (records + cached contract sources) as a JSON file; import it back on any browser or device
 - **Deployment history sidebar** — collapsible history of past deployments with quick links
 - **Network comparison** — deploy the same contract to two networks simultaneously
 - **Contract diff view** — see what changed when re-deploying an existing contract
@@ -49,6 +53,8 @@ Shipyard is the "Thirdweb for GenLayer" — a fully client-side web app that rem
 | Toasts | react-hot-toast |
 | Icons | lucide-react |
 | Fonts | Fira Code + Syne |
+| URL compression | lz-string |
+| Analytics | PostHog |
 
 ---
 
@@ -142,6 +148,7 @@ shipyard/
 │   ├── deploy/               # ContractUploader, NetworkSelector, DeployForm, DeployLogs, FaucetWidget, ContractDiff
 │   ├── interact/             # ContractPanel, ReadMethods, WriteMethods
 │   ├── layout/               # Header, Sidebar
+│   ├── providers/            # Client-side provider wrappers (PostHog, Toaster)
 │   └── ui/                   # Button, Card, Spinner, CopyButton, NetworkBadge
 ├── hooks/
 │   ├── useDeployStore.ts     # Zustand global state
@@ -155,6 +162,7 @@ shipyard/
 │   │   ├── parser.ts         # Python contract parser
 │   │   ├── deploy.ts         # Deploy orchestration
 │   │   └── templates.ts      # 20 contract templates
+│   ├── analytics.ts          # PostHog event wrapper
 │   └── diff.ts               # Line-level diff utility
 └── types/index.ts            # Shared TypeScript types
 ```
