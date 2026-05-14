@@ -12,12 +12,17 @@ import clsx from 'clsx'
 
 function HealthIcon({ status }: { status: HealthStatus }) {
   const props = { size: 11, strokeWidth: 2 }
-  switch (status) {
-    case 'up':   return <Signal       {...props} className="text-green-400"   title="Online" />
-    case 'slow': return <SignalMedium {...props} className="text-yellow-400"  title="Responding slowly" />
-    case 'down': return <SignalZero   {...props} className="text-red-500"     title="Offline" />
-    default:     return <Signal       {...props} className="text-neutral-600" title="Checking…" />
+  const titles: Record<HealthStatus, string> = {
+    up: 'Online', slow: 'Responding slowly', down: 'Offline', loading: 'Checking…',
   }
+  const icon = status === 'down'
+    ? <SignalZero   {...props} className="text-red-500" />
+    : status === 'slow'
+    ? <SignalMedium {...props} className="text-yellow-400" />
+    : status === 'up'
+    ? <Signal       {...props} className="text-green-400" />
+    : <Signal       {...props} className="text-neutral-600" />
+  return <span className="ml-auto" title={titles[status]}>{icon}</span>
 }
 
 export default function NetworkSelector() {
@@ -67,9 +72,7 @@ export default function NetworkSelector() {
                 >
                   {network.name}
                 </span>
-                <span className="ml-auto">
-                  <HealthIcon status={health[network.id as NetworkId]} />
-                </span>
+                <HealthIcon status={health[network.id as NetworkId]} />
               </span>
 
               <p className="text-[11px] leading-tight text-neutral-600 line-clamp-2">
