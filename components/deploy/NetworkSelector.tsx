@@ -3,13 +3,27 @@
 import { getAllNetworks } from '@/lib/genlayer/networks'
 import { NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
 import { useDeployStore } from '@/hooks/useDeployStore'
+import { useNetworkHealth } from '@/hooks/useNetworkHealth'
+import type { HealthStatus } from '@/hooks/useNetworkHealth'
+import { Signal, SignalMedium, SignalZero } from 'lucide-react'
 import { track } from '@/lib/analytics'
 import type { NetworkId } from '@/types'
 import clsx from 'clsx'
 
+function HealthIcon({ status }: { status: HealthStatus }) {
+  const props = { size: 11, strokeWidth: 2 }
+  switch (status) {
+    case 'up':   return <Signal       {...props} className="text-green-400"   title="Online" />
+    case 'slow': return <SignalMedium {...props} className="text-yellow-400"  title="Responding slowly" />
+    case 'down': return <SignalZero   {...props} className="text-red-500"     title="Offline" />
+    default:     return <Signal       {...props} className="text-neutral-600" title="Checking…" />
+  }
+}
+
 export default function NetworkSelector() {
   const { selectedNetwork, setSelectedNetwork } = useDeployStore()
   const networks = getAllNetworks()
+  const health = useNetworkHealth()
 
   return (
     <div className="flex flex-col gap-3">
@@ -36,7 +50,7 @@ export default function NetworkSelector() {
               aria-pressed={isSelected}
               aria-label={`Select ${network.name}`}
             >
-              {/* Status dot */}
+              {/* Status dot + name + health indicator */}
               <span className="flex items-center gap-1.5">
                 <span
                   className={clsx(
@@ -52,6 +66,9 @@ export default function NetworkSelector() {
                   )}
                 >
                   {network.name}
+                </span>
+                <span className="ml-auto">
+                  <HealthIcon status={health[network.id as NetworkId]} />
                 </span>
               </span>
 
