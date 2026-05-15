@@ -6,7 +6,7 @@ export const NETWORKS: Record<NetworkId, Network> = {
   'testnet-bradbury': {
     id: 'testnet-bradbury',
     name: 'Testnet Bradbury',
-    rpcUrl: 'https://rpc.bradbury.genlayer.com',
+    rpcUrl: 'https://rpc-bradbury.genlayer.com',
     chainId: 17180,
     isLive: true,
     description: 'Experimental LLM inference testnet — primary deployment target',
@@ -15,7 +15,7 @@ export const NETWORKS: Record<NetworkId, Network> = {
   'testnet-asimov': {
     id: 'testnet-asimov',
     name: 'Testnet Asimov',
-    rpcUrl: 'https://rpc.asimov.genlayer.com',
+    rpcUrl: 'https://rpc-asimov.genlayer.com',
     chainId: 17181,
     isLive: true,
     description: 'Validator onboarding testnet',
