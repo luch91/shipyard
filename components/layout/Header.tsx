@@ -6,9 +6,10 @@ import { ExternalLink, Anchor } from 'lucide-react'
 import clsx from 'clsx'
 
 const NAV_LINKS = [
-  { href: '/deploy', label: 'Deploy' },
-  { href: '/templates', label: 'Templates' },
-  { href: '/compare', label: 'Compare' },
+  { href: '/deploy',    label: 'Deploy',    soon: false },
+  { href: '/templates', label: 'Templates', soon: false },
+  { href: '/compare',   label: 'Compare',   soon: false },
+  { href: '/registry',  label: 'Registry',  soon: true  },
 ]
 
 export default function Header() {
@@ -25,18 +26,23 @@ export default function Header() {
 
         {/* Nav */}
         <nav className="flex items-center gap-1">
-          {NAV_LINKS.map(({ href, label }) => (
+          {NAV_LINKS.map(({ href, label, soon }) => (
             <Link
               key={href}
               href={href}
               className={clsx(
-                'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                 pathname.startsWith(href)
                   ? 'bg-neutral-800 text-white'
                   : 'text-neutral-400 hover:bg-neutral-800/60 hover:text-white'
               )}
             >
               {label}
+              {soon && (
+                <span className="rounded px-1 py-0.5 font-mono text-[10px] font-semibold bg-amber-500/10 text-amber-400">
+                  Soon
+                </span>
+              )}
             </Link>
           ))}
 
