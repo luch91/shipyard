@@ -10,15 +10,18 @@ const SLOW_MS = 1500
 const TIMEOUT_MS = 5000
 
 async function ping(rpcUrl: string): Promise<HealthStatus> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   const t0 = Date.now()
   try {
-    await fetch(rpcUrl, { method: 'GET', signal: controller.signal, mode: 'no-cors' })
-    clearTimeout(timer)
+    const res = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', id: 1 }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    })
+    const data = await res.json()
+    if (!data.result) return 'down'
     return Date.now() - t0 >= SLOW_MS ? 'slow' : 'up'
   } catch {
-    clearTimeout(timer)
     return 'down'
   }
 }

@@ -1,0 +1,51 @@
+# Shipyard
+
+> Shipyard is a browser-based deployment platform for GenLayer Intelligent Contracts. Deploy Python-based AI-native smart contracts to GenLayer testnets in under 60 seconds — no CLI or local tooling required.
+
+## What is Shipyard?
+
+Shipyard is a no-CLI Web3 developer tool that lets developers upload, configure, and deploy GenLayer Intelligent Contracts directly from a browser. It supports multiple GenLayer testnets and provides real-time deployment logs, a contract template library, a live contract registry, and a contract interaction interface.
+
+## What is GenLayer?
+
+GenLayer is a next-generation blockchain that supports Intelligent Contracts — Python-based smart contracts that can access the internet, call external APIs, and use LLM inference to process real-world data on-chain.
+
+## What are Intelligent Contracts?
+
+Intelligent Contracts are AI-native smart contracts unique to the GenLayer network. Unlike traditional EVM smart contracts written in Solidity, they are written in Python and can execute non-deterministic logic, call web APIs, and use LLM reasoning as part of their on-chain execution.
+
+## Supported Networks
+
+- Testnet Bradbury (chainId: 17180) — Primary LLM inference testnet and main deployment target
+- Testnet Asimov (chainId: 17181) — Validator onboarding testnet
+- Studionet (chainId: 17182) — Browser-based GenLayer Studio environment
+- Localnet (chainId: 61999) — Docker-based local development node
+
+## Key Features
+
+- Browser-based deployment: no terminal, no local tooling, no environment setup required
+- Contract templates: working examples including storage, token, prediction market, and Wikipedia fact-checker contracts
+- Network comparison: deploy the same contract to two networks simultaneously and compare results side by side
+- Contract registry: browse Intelligent Contracts deployed on live GenLayer networks
+- Contract interaction: read state and call methods on any deployed contract
+- Real-time deployment logs: streaming transaction status and on-chain confirmation
+
+## Developer Workflow
+
+1. Upload a Python Intelligent Contract (.py file) or choose from built-in templates
+2. Shipyard parses the contract and auto-generates a typed constructor parameter form
+3. Select a target GenLayer network
+4. Deploy — Shipyard handles transaction signing and streams live logs
+
+## Use Cases
+
+- Rapid prototyping of Intelligent Contracts without local environment setup
+- Exploring the GenLayer ecosystem as a new developer
+- Testing contract behaviour across multiple testnets in parallel
+- Browsing and interacting with existing on-chain Intelligent Contracts
+
+## Ecosystem
+
+- GenLayer documentation: https://docs.genlayer.com
+- GenLayer testnet faucet: https://testnet-faucet.genlayer.foundation
+- GenLayer Studio: https://studio.genlayer.com

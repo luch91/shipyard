@@ -25,7 +25,9 @@ Shipyard is the "Thirdweb for GenLayer" — a fully client-side web app that rem
 - **20 contract templates** — from Hello World to living, self-evolving AI contracts
 - **One-click deploy** — upload or paste a `.py` contract, fill in params, deploy
 - **4 networks** — Testnet Bradbury, Testnet Asimov, Studionet, Localnet
+- **Network health indicators** — real-time RPC status per network (online / slow / offline)
 - **Live deploy logs** — streaming terminal output during deployment
+- **Contract registry** — browse Intelligent Contracts deployed on live GenLayer networks
 - **Interact page** — call read and write methods on any deployed contract
 - **One-click fork** — load any deployed contract's source into the editor from the interact page, ready to modify and redeploy
 - **Shareable deploy links** — network-aware interact URLs (`/interact/0xabc?network=bradbury`) that pre-select the correct network when shared
@@ -97,7 +99,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | Network | Status | Use case |
 |---|---|---|
 | **Testnet Bradbury** | Live | Primary — LLM inference testnet. Recommended for all deployments. |
-| Testnet Asimov | Live | Validator onboarding testnet. Restricted deploy access. |
+| Testnet Asimov | Live | Validator onboarding testnet. Open for general deployment. |
 | Studionet | Live | Browser-based Studio environment. Free gas, instant finalization. |
 | Localnet | Local | Docker-based local node. Requires GenLayer stack running on `localhost:4000`. |
 
@@ -143,10 +145,13 @@ shipyard/
 │   ├── deploy/page.tsx       # Deploy flow
 │   ├── templates/page.tsx    # Template gallery
 │   ├── interact/[address]/   # Contract interaction
-│   └── compare/page.tsx      # Network comparison
+│   ├── compare/page.tsx      # Network comparison
+│   ├── registry/page.tsx     # Contract registry
+│   └── api/registry/         # Server-side GenLayer network scanner
 ├── components/
 │   ├── deploy/               # ContractUploader, NetworkSelector, DeployForm, DeployLogs, FaucetWidget, ContractDiff
 │   ├── interact/             # ContractPanel, ReadMethods, WriteMethods
+│   ├── registry/             # RegistryClient
 │   ├── layout/               # Header, Sidebar
 │   ├── providers/            # Client-side provider wrappers (PostHog, Toaster)
 │   └── ui/                   # Button, Card, Spinner, CopyButton, NetworkBadge
@@ -154,6 +159,7 @@ shipyard/
 │   ├── useDeployStore.ts     # Zustand global state
 │   ├── useDeploy.ts          # Deploy orchestration
 │   ├── useWallet.ts          # Wallet connect/disconnect/balance
+│   ├── useNetworkHealth.ts   # Real-time RPC health per network
 │   └── useContract.ts        # Read/write method hooks
 ├── lib/
 │   ├── genlayer/
@@ -200,7 +206,7 @@ class MyContract(gl.Contract):
 
 - Private keys are **never stored** — not in Zustand, not in localStorage, not anywhere. They live only in local `useState` for the duration of the signing operation and are cleared on component unmount.
 - Only the wallet **address** is persisted to localStorage for UX continuity.
-- This is a fully client-side app — no backend, no server actions, no API routes that touch private keys.
+- The one server-side API route (`/api/registry`) scans GenLayer networks for deployed contracts. It handles no private keys and stores no user data.
 
 ---
 

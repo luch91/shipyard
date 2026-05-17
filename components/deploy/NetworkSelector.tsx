@@ -10,10 +10,10 @@ import { track } from '@/lib/analytics'
 import type { NetworkId } from '@/types'
 import clsx from 'clsx'
 
-function HealthIcon({ status }: { status: HealthStatus }) {
+function HealthIcon({ status, networkId }: { status: HealthStatus; networkId: NetworkId }) {
   const props = { size: 11, strokeWidth: 2 }
   const titles: Record<HealthStatus, string> = {
-    up: 'Online', slow: 'Responding slowly', down: 'Offline', loading: 'Checking…',
+    up: 'Online', slow: 'Responding slowly', down: networkId === 'localnet' ? 'Not running' : 'Offline', loading: 'Checking…',
   }
   const icon = status === 'down'
     ? <SignalZero   {...props} className="text-red-500" />
@@ -72,7 +72,7 @@ export default function NetworkSelector() {
                 >
                   {network.name}
                 </span>
-                <HealthIcon status={health[network.id as NetworkId]} />
+                <HealthIcon status={health[network.id as NetworkId]} networkId={network.id as NetworkId} />
               </span>
 
               <p className="text-[11px] leading-tight text-neutral-600 line-clamp-2">
