@@ -16,8 +16,10 @@ function toParamType(raw: string): ParamType {
 // ─── Class Name ───────────────────────────────────────────────────────────────
 
 function parseClassName(source: string): string {
-  const match = source.match(/^class\s+(\w+)\s*\(\s*gl\.Contract\s*\)/m)
-  return match ? match[1] : ''
+  const inheritMatch = source.match(/^class\s+(\w+)\s*\(\s*gl\.Contract\s*\)/m)
+  if (inheritMatch) return inheritMatch[1]
+  const decoratorMatch = source.match(/@gl\.contract[^\n]*\n\s*class\s+(\w+)/)
+  return decoratorMatch ? decoratorMatch[1] : ''
 }
 
 // ─── Constructor Params ───────────────────────────────────────────────────────
@@ -221,7 +223,10 @@ export function validateContract(source: string): ValidationResult {
     )
   }
 
-  if (!source.match(/class\s+\w+\s*\(\s*gl\.Contract\s*\)/)) {
+  const hasContractClass =
+    source.match(/class\s+\w+\s*\(\s*gl\.Contract\s*\)/) ||
+    source.match(/@gl\.contract[^\n]*\n\s*class\s+\w+/)
+  if (!hasContractClass) {
     errors.push('Contract class must extend gl.Contract (e.g. class MyContract(gl.Contract):)')
   }
 
