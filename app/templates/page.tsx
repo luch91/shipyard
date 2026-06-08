@@ -18,12 +18,18 @@ const DIFFICULTY_COLORS: Record<TemplateDifficulty, string> = {
 
 function TemplateCard({ template }: { template: ContractTemplate }) {
   const [expanded, setExpanded] = useState(false)
-  const { setContractSource, setParsedContract } = useDeployStore()
+  const { setContractSource, setParsedContract, setConstructorArg } = useDeployStore()
   const router = useRouter()
 
   const handleUse = () => {
+    const parsed = parseContract(template.source)
     setContractSource(template.source)
-    setParsedContract(parseContract(template.source))
+    setParsedContract(parsed)
+    for (const param of parsed.constructorParams) {
+      if (param.defaultValue !== undefined) {
+        setConstructorArg(param.name, param.type === 'bool' ? param.defaultValue.toLowerCase() : param.defaultValue)
+      }
+    }
     track('template_selected', { template_name: template.name, difficulty: template.difficulty, tags: template.tags })
     router.push('/deploy')
   }

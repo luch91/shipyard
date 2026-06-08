@@ -1,4 +1,5 @@
 import type { ContractTemplate, TemplateCategory, TemplateDifficulty } from '@/types'
+import { CONTRACT_HEADER } from './runners'
 
 // ─── Templates ────────────────────────────────────────────────────────────────
 
@@ -11,13 +12,13 @@ export const TEMPLATES: ContractTemplate[] = [
     category: 'example',
     difficulty: 'beginner',
     tags: ['starter', 'string', 'read', 'write'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 
 class HelloWorld(gl.Contract):
     greeting: str
 
-    def __init__(self, initial_greeting: str):
+    def __init__(self, initial_greeting: str = "Hello World!"):
         self.greeting = initial_greeting
 
     @gl.public.view
@@ -38,14 +39,14 @@ class HelloWorld(gl.Contract):
     category: 'example',
     difficulty: 'beginner',
     tags: ['starter', 'state', 'counter', 'no-llm'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 
 class SimpleCounter(gl.Contract):
     count: u64
     owner: str
 
-    def __init__(self, start: int):
+    def __init__(self, start: int = 0):
         self.count = start
         self.owner = gl.message.sender_address.as_hex
 
@@ -78,7 +79,7 @@ class SimpleCounter(gl.Contract):
     category: 'utility',
     difficulty: 'beginner',
     tags: ['storage', 'map', 'no-llm', 'utility'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 
 class KeyValueStore(gl.Contract):
@@ -119,14 +120,14 @@ class KeyValueStore(gl.Contract):
     category: 'example',
     difficulty: 'intermediate',
     tags: ['llm', 'gl.nondet', 'decision', 'game', 'official-example'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
 class WizardOfCoin(gl.Contract):
     have_coin: bool
 
-    def __init__(self, have_coin: bool):
+    def __init__(self, have_coin: bool = True):
         self.have_coin = have_coin
 
     @gl.public.write
@@ -168,7 +169,7 @@ Respond ONLY with valid JSON in this exact format:
     category: 'oracle',
     difficulty: 'intermediate',
     tags: ['llm', 'gl.nondet', 'web-fetch', 'oracle', 'eq_principle'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -222,7 +223,7 @@ Respond ONLY with valid JSON: {{"answer": "<concise answer>"}}"""
     category: 'defi',
     difficulty: 'advanced',
     tags: ['llm', 'prediction', 'market', 'defi', 'gl.nondet', 'eq_principle'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -233,7 +234,7 @@ class PredictionMarket(gl.Contract):
     outcome: str
     owner: str
 
-    def __init__(self, question: str, resolution_url: str):
+    def __init__(self, question: str = "Will Bitcoin reach $200k by end of 2025?", resolution_url: str = "https://coinmarketcap.com/currencies/bitcoin/"):
         self.question = question
         self.resolution_url = resolution_url
         self.resolved = False
@@ -284,7 +285,7 @@ Respond ONLY with valid JSON: {{"outcome": "YES" or "NO", "reasoning": "<brief e
     category: 'governance',
     difficulty: 'intermediate',
     tags: ['dao', 'governance', 'voting', 'no-llm'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 
 class SimpleDAO(gl.Contract):
@@ -295,7 +296,7 @@ class SimpleDAO(gl.Contract):
     owner: str
     has_voted: TreeMap[str, bool]
 
-    def __init__(self, proposal: str):
+    def __init__(self, proposal: str = "Increase contributor rewards by 10%"):
         self.proposal = proposal
         self.votes_for = 0
         self.votes_against = 0
@@ -343,7 +344,7 @@ class SimpleDAO(gl.Contract):
     category: 'defi',
     difficulty: 'advanced',
     tags: ['escrow', 'defi', 'dispute', 'llm', 'gl.nondet', 'eq_principle'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -360,11 +361,11 @@ class Escrow(gl.Contract):
 
     def __init__(
         self,
-        seller: str,
-        arbiter: str,
-        description: str,
-        resolution_url: str,
-        amount: int,
+        seller: str = "0x0000000000000000000000000000000000000000",
+        arbiter: str = "0x0000000000000000000000000000000000000000",
+        description: str = "Payment for web development services",
+        resolution_url: str = "https://example.com/resolution",
+        amount: int = 100,
     ):
         self.buyer = gl.message.sender_address.as_hex
         self.seller = seller
@@ -450,7 +451,7 @@ Respond ONLY with valid JSON: {{"decision": "seller" or "buyer", "reasoning": "<
     category: 'utility',
     difficulty: 'intermediate',
     tags: ['llm', 'gl.nondet', 'web-fetch', 'aggregator', 'eq_principle'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -461,7 +462,7 @@ class WebDataAggregator(gl.Contract):
     source2: str
     last_updated: u64
 
-    def __init__(self, topic: str):
+    def __init__(self, topic: str = "Artificial Intelligence trends"):
         self.topic = topic
         self.summary = ""
         self.source1 = ""
@@ -515,7 +516,7 @@ Respond ONLY with valid JSON: {{"summary": "<2-3 sentence synthesis>"}}"""
     category: 'oracle',
     difficulty: 'intermediate',
     tags: ['oracle', 'price', 'gl.nondet', 'web-fetch', 'eq_principle', 'defi'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -525,7 +526,7 @@ class TokenPriceTracker(gl.Contract):
     last_updated: u64
     price_url: str
 
-    def __init__(self, token_symbol: str, price_url: str):
+    def __init__(self, token_symbol: str = "BTC", price_url: str = "https://coinmarketcap.com/currencies/bitcoin/"):
         self.token_symbol = token_symbol
         self.price_url = price_url
         self.price_usd = "0"
@@ -575,7 +576,7 @@ Respond ONLY with valid JSON: {{"price": "<price as a decimal string, e.g. 1234.
     category: 'oracle',
     difficulty: 'advanced',
     tags: ['llm', 'gl.nondet', 'fact-check', 'oracle', 'eq_principle', 'verification'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -644,7 +645,7 @@ Respond ONLY with valid JSON:
     category: 'defi',
     difficulty: 'intermediate',
     tags: ['crowdfunding', 'defi', 'no-llm', 'contributions', 'state'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 
 class Crowdfunding(gl.Contract):
@@ -655,7 +656,7 @@ class Crowdfunding(gl.Contract):
     finalized: bool
     contributions: TreeMap[str, u64]
 
-    def __init__(self, title: str, goal: int):
+    def __init__(self, title: str = "Community Solar Panel Project", goal: int = 1000):
         self.title = title
         self.goal = goal
         self.raised = 0
@@ -706,7 +707,7 @@ class Crowdfunding(gl.Contract):
     category: 'defi',
     difficulty: 'advanced',
     tags: ['llm', 'gl.nondet', 'sports', 'betting', 'eq_principle', 'official-example'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -809,7 +810,7 @@ Respond ONLY with valid JSON: {{"winner": "{bet.team1}" or "{bet.team2}" or "dra
     category: 'utility',
     difficulty: 'intermediate',
     tags: ['llm', 'gl.nondet', 'github', 'profiles', 'eq_principle', 'official-example'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 
 class GitHubProfileVault(gl.Contract):
@@ -863,7 +864,7 @@ class GitHubProfileVault(gl.Contract):
     category: 'utility',
     difficulty: 'advanced',
     tags: ['llm', 'gl.nondet', 'living-contract', 'evolving', 'eq_principle', 'creative'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -874,7 +875,7 @@ class EvolvingStory(gl.Contract):
     chapters: DynArray[str]
     chapter_count: u64
 
-    def __init__(self, title: str, genre: str, opening: str):
+    def __init__(self, title: str = "The Last Algorithm", genre: str = "sci-fi", opening: str = "In 2089 the last human programmer discovered a line of code no machine could write."):
         self.title = title
         self.genre = genre
         self.opening = opening
@@ -943,7 +944,7 @@ Respond ONLY with valid JSON: {{"chapter": "<the chapter text>"}}"""
     category: 'example',
     difficulty: 'intermediate',
     tags: ['llm', 'gl.nondet', 'living-contract', 'evolving', 'game', 'eq_principle', 'pet'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -956,7 +957,7 @@ class DigitalPet(gl.Contract):
     age_interactions: u64
     last_response: str
 
-    def __init__(self, name: str, species: str):
+    def __init__(self, name: str = "Pixel", species: str = "cyber-dragon"):
         self.name = name
         self.species = species
         self.hunger = 5      # 0=starving, 10=full
@@ -1059,7 +1060,7 @@ Respond ONLY with valid JSON: {{"response": "<your reaction>"}}"""
     category: 'utility',
     difficulty: 'advanced',
     tags: ['llm', 'gl.nondet', 'living-contract', 'evolving', 'knowledge', 'eq_principle', 'self-updating'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -1069,7 +1070,7 @@ class SelfUpdatingKnowledgeBase(gl.Contract):
     sources_ingested: u64
     source_log: DynArray[str]
 
-    def __init__(self, topic: str):
+    def __init__(self, topic: str = "Artificial Intelligence"):
         self.topic = topic
         self.knowledge = f"Knowledge base initialised for topic: {topic}. No sources ingested yet."
         self.sources_ingested = 0
@@ -1130,7 +1131,7 @@ Respond ONLY with valid JSON: {{"updated_knowledge": "<merged knowledge, max 400
     category: 'utility',
     difficulty: 'advanced',
     tags: ['llm', 'gl.nondet', 'living-contract', 'evolving', 'persona', 'eq_principle', 'ai-character'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -1142,7 +1143,7 @@ class AdaptivePersona(gl.Contract):
     interaction_count: u64
     last_reply: str
 
-    def __init__(self, name: str, backstory: str, initial_traits: str):
+    def __init__(self, name: str = "Aria", backstory: str = "A philosopher who became an AI researcher after the singularity.", initial_traits: str = "curious and empathetic"):
         self.name = name
         self.backstory = backstory
         self.personality_traits = initial_traits
@@ -1221,7 +1222,7 @@ Respond ONLY with valid JSON:
     category: 'governance',
     difficulty: 'advanced',
     tags: ['llm', 'gl.nondet', 'debate', 'governance', 'eq_principle', 'creative'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -1236,7 +1237,7 @@ class DebateArena(gl.Contract):
     finalized: bool
     owner: str
 
-    def __init__(self, topic: str, side_a: str, side_b: str):
+    def __init__(self, topic: str = "AI will benefit humanity more than it harms it", side_a: str = "Pro-AI", side_b: str = "Against-AI"):
         self.topic = topic
         self.side_a = side_a
         self.side_b = side_b
@@ -1341,7 +1342,7 @@ Respond ONLY with valid JSON:
     category: 'governance',
     difficulty: 'advanced',
     tags: ['llm', 'gl.nondet', 'living-contract', 'evolving', 'governance', 'eq_principle', 'constitution', 'self-amending'],
-    source: `# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+    source: `${CONTRACT_HEADER}
 from genlayer import *
 import json
 
@@ -1353,7 +1354,7 @@ class LivingConstitution(gl.Contract):
     owner: str
     amendment_log: DynArray[str]
 
-    def __init__(self, name: str, founding_text: str):
+    def __init__(self, name: str = "Shipyard DAO", founding_text: str = "Article I: All members have equal voting rights. Article II: Proposals require 60% majority. Article III: Treasury is managed collectively."):
         self.name = name
         self.constitution = founding_text
         self.version = 1

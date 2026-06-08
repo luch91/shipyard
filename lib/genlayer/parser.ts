@@ -1,4 +1,5 @@
 import type { ParsedContract, ContractParam, ContractMethod, ParamType } from '@/types'
+import { DEPRECATED_FLOATING_TAGS, RUNNER_HASH } from './runners'
 
 // ─── Type Mapping ─────────────────────────────────────────────────────────────
 
@@ -213,14 +214,19 @@ export function validateContract(source: string): ValidationResult {
   const dependsMatch = source.match(/\{\s*"Depends"\s*:\s*"py-genlayer:([^"]+)"\s*\}/)
   if (!dependsMatch) {
     warnings.push(
-      'No py-genlayer dependency comment found. If this contract fails to deploy on Bradbury, add this line at the top:\n' +
-      '# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }'
+      `No py-genlayer dependency comment found. If this contract fails to deploy on Bradbury, add this line at the top:\n# { "Depends": "py-genlayer:${RUNNER_HASH}" }`
     )
-  } else if (dependsMatch[1] !== '1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6') {
-    warnings.push(
-      `py-genlayer hash "${dependsMatch[1]}" may not resolve on Bradbury. If deployment fails, use the pinned hash:\n` +
-      '# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }'
-    )
+  } else {
+    const fullTag = `py-genlayer:${dependsMatch[1]}`
+    if (DEPRECATED_FLOATING_TAGS.includes(fullTag)) {
+      errors.push(
+        `Floating runner tag "${fullTag}" is no longer accepted at deploy on any network. Replace with the pinned hash: py-genlayer:${RUNNER_HASH}`
+      )
+    } else if (dependsMatch[1] !== RUNNER_HASH) {
+      warnings.push(
+        `py-genlayer hash "${dependsMatch[1]}" may not resolve on Bradbury. If deployment fails, use the pinned hash:\n# { "Depends": "py-genlayer:${RUNNER_HASH}" }`
+      )
+    }
   }
 
   const hasContractClass =

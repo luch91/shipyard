@@ -16,7 +16,7 @@ import ContractDiff from '@/components/deploy/ContractDiff'
 // Isolated so useSearchParams is inside a Suspense boundary (Next.js 14 requirement)
 function SourceLoader() {
   const searchParams = useSearchParams()
-  const { setContractSource, setParsedContract } = useDeployStore()
+  const { setContractSource, setParsedContract, setConstructorArg } = useDeployStore()
 
   useEffect(() => {
     const encoded = searchParams.get('source')
@@ -25,10 +25,16 @@ function SourceLoader() {
     if (!decoded) return
     const validation = validateContract(decoded)
     if (validation.valid) {
+      const parsed = parseContract(decoded)
       setContractSource(decoded)
-      setParsedContract(parseContract(decoded))
+      setParsedContract(parsed)
+      for (const param of parsed.constructorParams) {
+        if (param.defaultValue !== undefined) {
+          setConstructorArg(param.name, param.type === 'bool' ? param.defaultValue.toLowerCase() : param.defaultValue)
+        }
+      }
     }
-  }, [searchParams, setContractSource, setParsedContract])
+  }, [searchParams, setContractSource, setParsedContract, setConstructorArg])
 
   return null
 }
