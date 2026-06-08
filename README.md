@@ -13,7 +13,7 @@ Deploy Python Intelligent Contracts to any GenLayer network in under 60 seconds 
 
 ## What is Shipyard?
 
-Shipyard is the "Thirdweb for GenLayer" — a fully client-side web app that removes the deployment friction from GenLayer's Intelligent Contract ecosystem. It is built for two personas:
+Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deployment friction from GenLayer's Intelligent Contract ecosystem. It is built for two personas:
 
 - **Newbies** — no GenLayer experience. Discover it, pick a template, deploy in one click.
 - **Experts** — already building on GenLayer. Fast deployment, constructor param introspection, network switching, readable logs.
@@ -23,7 +23,9 @@ Shipyard is the "Thirdweb for GenLayer" — a fully client-side web app that rem
 ## Features
 
 - **20 contract templates** — from Hello World to living, self-evolving AI contracts
-- **One-click deploy** — upload or paste a `.py` contract, fill in params, deploy
+- **AI contract generation** — describe your contract in plain English, get a deployable Python Intelligent Contract in seconds
+- **One-click deploy** — upload, paste, or generate a `.py` contract, fill in params, deploy
+- **Pre-filled constructor params** — templates and AI-generated contracts arrive with example values ready to deploy
 - **4 networks** — Testnet Bradbury, Testnet Asimov, Studionet, Localnet
 - **Network health indicators** — real-time RPC status per network (online / slow / offline)
 - **Live deploy logs** — streaming terminal output during deployment
@@ -76,13 +78,19 @@ cd shipyard
 npm install
 ```
 
-### Environment (optional)
+### Environment
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-The app works without any env vars — users input their private key in the UI. The key is never stored; it lives only in local component state for the duration of the session.
+The app works without any env vars for basic deployment. To enable AI contract generation, add your OpenRouter API key:
+
+```bash
+OPENROUTER_API_KEY=sk-or-v1-...
+```
+
+Get a key at [openrouter.ai/keys](https://openrouter.ai/keys). The private key users enter in the UI is never stored — it lives only in local component state for the duration of the signing operation.
 
 ### Run
 
@@ -147,6 +155,7 @@ shipyard/
 │   ├── interact/[address]/   # Contract interaction
 │   ├── compare/page.tsx      # Network comparison
 │   ├── registry/page.tsx     # Contract registry
+│   ├── api/generate/         # AI contract generation route (OpenRouter proxy)
 │   └── api/registry/         # Server-side GenLayer network scanner
 ├── components/
 │   ├── deploy/               # ContractUploader, NetworkSelector, DeployForm, DeployLogs, FaucetWidget, ContractDiff
@@ -165,9 +174,13 @@ shipyard/
 │   ├── genlayer/
 │   │   ├── networks.ts       # Network configs and colors
 │   │   ├── client.ts         # genlayer-js client factory
-│   │   ├── parser.ts         # Python contract parser
+│   │   ├── parser.ts         # Python contract parser and validator
 │   │   ├── deploy.ts         # Deploy orchestration
-│   │   └── templates.ts      # 20 contract templates
+│   │   ├── templates.ts      # 20 contract templates
+│   │   └── runners.ts        # Pinned GenLayer runner hashes
+│   ├── ai/
+│   │   ├── models.ts         # OpenRouter model definitions
+│   │   └── systemPrompt.ts   # GenLayer contract generation prompt
 │   ├── analytics.ts          # PostHog event wrapper
 │   └── diff.ts               # Line-level diff utility
 └── types/index.ts            # Shared TypeScript types
@@ -198,7 +211,20 @@ class MyContract(gl.Contract):
         self.state_var = new_value
 ```
 
-> **Important:** The `py-genlayer:test` dependency alias does not resolve on Bradbury. Always use the pinned hash shown above. Shipyard validates this automatically.
+Both declaration styles are supported:
+
+```python
+# Inheritance (classic)
+class MyContract(gl.Contract):
+    ...
+
+# Decorator (alternative)
+@gl.contract
+class MyContract:
+    ...
+```
+
+> **Important:** Floating runner tags (`py-genlayer:test`, `py-genlayer:latest`) are rejected at deploy on **all networks** — Bradbury, Asimov, and Studionet. Always use the pinned hash shown above. Shipyard validates this automatically and treats floating tags as a hard error.
 
 ---
 
@@ -206,7 +232,8 @@ class MyContract(gl.Contract):
 
 - Private keys are **never stored** — not in Zustand, not in localStorage, not anywhere. They live only in local `useState` for the duration of the signing operation and are cleared on component unmount.
 - Only the wallet **address** is persisted to localStorage for UX continuity.
-- The one server-side API route (`/api/registry`) scans GenLayer networks for deployed contracts. It handles no private keys and stores no user data.
+- Two server-side API routes exist: `/api/registry` scans GenLayer networks for deployed contracts, and `/api/generate` proxies AI contract generation requests to OpenRouter. Neither handles private keys or stores user data.
+- The OpenRouter API key lives server-side only (`OPENROUTER_API_KEY`) and is never exposed to the client.
 
 ---
 
