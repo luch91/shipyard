@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import toast from 'react-hot-toast'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import type { DeploymentRecord, NetworkId } from '@/types'
+import { useSidebar } from '@/components/providers/SidebarContext'
 
 const HISTORY_KEY = 'gendeploy:deployments'
 
@@ -26,8 +27,8 @@ export default function Sidebar() {
   const [open, setOpen] = useState(true)
   const [deployments, setDeployments] = useState<DeploymentRecord[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { mobileOpen, setMobileOpen } = useSidebar()
 
-  // Load from localStorage
   useEffect(() => {
     const load = () => {
       try {
@@ -36,15 +37,18 @@ export default function Sidebar() {
       } catch { /* non-fatal */ }
     }
     load()
-    // Re-read when storage changes (e.g. new deploy in same tab)
     window.addEventListener('storage', load)
-    // Poll for same-tab updates
     const interval = setInterval(load, 3000)
     return () => {
       window.removeEventListener('storage', load)
       clearInterval(interval)
     }
   }, [])
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname, setMobileOpen])
 
   if (pathname === '/') return null
 
@@ -84,7 +88,6 @@ export default function Sidebar() {
           toast.error('Invalid history file.')
           return
         }
-        // Write sources only if not already cached
         if (data.sources && typeof data.sources === 'object') {
           for (const [address, src] of Object.entries(data.sources)) {
             if (typeof src === 'string' && !localStorage.getItem(`gendeploy:source:${address}`)) {
@@ -92,7 +95,6 @@ export default function Sidebar() {
             }
           }
         }
-        // Merge — deduplicate by address, sort newest first, cap at 50
         const existingAddresses = new Set(deployments.map((d) => d.address))
         const incoming = (data.deployments as DeploymentRecord[]).filter(
           (d) => d.address && d.contractName && d.network && d.deployedAt && !existingAddresses.has(d.address)
@@ -112,118 +114,134 @@ export default function Sidebar() {
   }
 
   return (
-    <aside
-      className={clsx(
-        'relative flex shrink-0 flex-col border-r border-neutral-800 bg-neutral-950 transition-all duration-200',
-        open ? 'w-56' : 'w-10'
+    <>
+      {/* Backdrop — mobile only, closes drawer on tap */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden
+        />
       )}
-    >
-      {/* Toggle button */}
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="absolute -right-3 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 text-neutral-400 hover:text-white focus:outline-none"
-        aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
-      >
-        {open ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
-      </button>
 
-      {open && (
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-neutral-800 px-3 py-3">
-            <div className="flex items-center gap-1.5">
-              <History size={13} className="text-neutral-500" />
-              <span className="font-mono text-xs font-semibold text-neutral-400">Deployments</span>
+      <aside
+        className={clsx(
+          'shrink-0 flex flex-col border-r border-neutral-800 bg-neutral-950',
+          // Mobile: fixed overlay that slides in from the left
+          'fixed bottom-0 left-0 top-14 z-50 w-64',
+          'transition-transform duration-200 ease-in-out',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop: in-flow relative panel, standard collapse
+          'lg:relative lg:z-auto lg:translate-x-0 lg:transition-all lg:duration-200',
+          open ? 'lg:w-56' : 'lg:w-10',
+        )}
+      >
+        {/* Toggle button — desktop only */}
+        <button
+          type="button"
+          onClick={() => setOpen((p) => !p)}
+          className="absolute -right-3 top-5 z-10 hidden lg:flex h-6 w-6 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 text-neutral-400 hover:text-white focus:outline-none"
+          aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          {open ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+        </button>
+
+        {/* Full content — shown when desktop open OR mobile drawer open */}
+        {(open || mobileOpen) && (
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-neutral-800 px-3 py-3">
+              <div className="flex items-center gap-1.5">
+                <History size={13} className="text-neutral-500" />
+                <span className="font-mono text-xs font-semibold text-neutral-400">Deployments</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
+                  aria-label="Import deployment history"
+                >
+                  <Upload size={14} strokeWidth={2.5} />
+                </button>
+                {deployments.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={exportHistory}
+                      className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
+                      aria-label="Export deployment history"
+                    >
+                      <Download size={14} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearHistory}
+                      className="text-neutral-400 hover:text-red-400 focus:outline-none"
+                      aria-label="Clear deployment history"
+                    >
+                      <Trash2 size={14} strokeWidth={2.5} />
+                    </button>
+                  </>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportFile}
+                className="hidden"
+              />
             </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
-                aria-label="Import deployment history"
-              >
-                <Upload size={14} strokeWidth={2.5} />
-              </button>
-              {deployments.length > 0 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={exportHistory}
-                    className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
-                    aria-label="Export deployment history"
-                  >
-                    <Download size={14} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearHistory}
-                    className="text-neutral-400 hover:text-red-400 focus:outline-none"
-                    aria-label="Clear deployment history"
-                  >
-                    <Trash2 size={14} strokeWidth={2.5} />
-                  </button>
-                </>
+
+            <div className="flex-1 overflow-y-auto py-2">
+              {deployments.length === 0 ? (
+                <p className="px-3 py-4 text-center text-[11px] text-neutral-700">
+                  No deployments yet
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-0.5 px-2">
+                  {deployments.map((d, i) => (
+                    <li key={`${d.address}-${i}`}>
+                      <Link
+                        href={`/interact/${d.address}?network=${d.network}`}
+                        className="group flex flex-col gap-1 rounded-md px-2 py-2 transition-colors hover:bg-neutral-800/60"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="truncate font-mono text-xs font-medium text-white group-hover:text-emerald-400">
+                            {d.contractName || 'Contract'}
+                          </span>
+                          <ExternalLink size={10} className="shrink-0 text-neutral-700 group-hover:text-neutral-500" />
+                        </div>
+                        <NetworkBadge networkId={d.network as NetworkId} size="sm" />
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="truncate font-mono text-[10px] text-neutral-600">
+                            {d.address.slice(0, 10)}…
+                          </span>
+                          <span className="shrink-0 text-[10px] text-neutral-700">
+                            {timeAgo(d.deployedAt)}
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleImportFile}
-              className="hidden"
-            />
           </div>
+        )}
 
-          {/* List */}
-          <div className="flex-1 overflow-y-auto py-2">
-            {deployments.length === 0 ? (
-              <p className="px-3 py-4 text-center text-[11px] text-neutral-700">
-                No deployments yet
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-0.5 px-2">
-                {deployments.map((d, i) => (
-                  <li key={`${d.address}-${i}`}>
-                    <Link
-                      href={`/interact/${d.address}?network=${d.network}`}
-                      className="group flex flex-col gap-1 rounded-md px-2 py-2 transition-colors hover:bg-neutral-800/60"
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="truncate font-mono text-xs font-medium text-white group-hover:text-emerald-400">
-                          {d.contractName || 'Contract'}
-                        </span>
-                        <ExternalLink size={10} className="shrink-0 text-neutral-700 group-hover:text-neutral-500" />
-                      </div>
-                      <NetworkBadge networkId={d.network as NetworkId} size="sm" />
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="truncate font-mono text-[10px] text-neutral-600">
-                          {d.address.slice(0, 10)}…
-                        </span>
-                        <span className="shrink-0 text-[10px] text-neutral-700">
-                          {timeAgo(d.deployedAt)}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+        {/* Collapsed icon — desktop only */}
+        {!open && (
+          <div className="hidden lg:flex flex-1 flex-col items-center pt-5">
+            <History size={14} className="text-neutral-600" />
+            {deployments.length > 0 && (
+              <span className="mt-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 font-mono text-[9px] text-emerald-400">
+                {deployments.length > 9 ? '9+' : deployments.length}
+              </span>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Collapsed state — icon only */}
-      {!open && (
-        <div className="flex flex-1 flex-col items-center pt-5">
-          <History size={14} className="text-neutral-600" />
-          {deployments.length > 0 && (
-            <span className="mt-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 font-mono text-[9px] text-emerald-400">
-              {deployments.length > 9 ? '9+' : deployments.length}
-            </span>
-          )}
-        </div>
-      )}
-    </aside>
+        )}
+      </aside>
+    </>
   )
 }

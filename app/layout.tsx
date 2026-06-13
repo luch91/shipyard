@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
 import { PostHogPageView } from '@/components/providers/PostHogPageView'
+import { SidebarProvider } from '@/components/providers/SidebarContext'
 import './globals.css'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://genshipyard.com'
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <PostHogProvider>
+        <SidebarProvider>
         <Suspense><PostHogPageView /></Suspense>
         <Header />
         <div className="flex" style={{ minHeight: 'calc(100vh - 56px)' }}>
@@ -113,6 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             },
           }}
         />
+        </SidebarProvider>
         </PostHogProvider>
       </body>
     </html>
