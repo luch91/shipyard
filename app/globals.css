@@ -38,3 +38,86 @@
     @apply bg-neutral-600;
   }
 }
+
+/* ── Landing Page Animations ───────────────────────────────────────────────── */
+
+@keyframes aurora {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.aurora-bg {
+  background: linear-gradient(
+    -45deg,
+    rgba(52, 211, 153, 0.12),
+    rgba(251, 191, 36, 0.06),
+    rgba(167, 139, 250, 0.06),
+    rgba(52, 211, 153, 0.08)
+  );
+  background-size: 400% 400%;
+  animation: aurora 14s ease infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.4)); }
+  50%       { opacity: 1.0; filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.7)); }
+}
+
+.logo-pulse {
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes chromatic-pulse {
+  0%   { box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.3); }
+  50%  { box-shadow: 0 0 0 1.5px rgba(52, 211, 153, 0.6); }
+  100% { box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.3); }
+}
+
+.pulse-border { animation: chromatic-pulse 3s ease infinite; }
+
+@keyframes shimmer-scan {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.shimmer-btn {
+  background: linear-gradient(
+    90deg,
+    #34d399 0%,
+    #34d399 40%,
+    #6ee7b7 50%,
+    #34d399 60%,
+    #34d399 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer-scan 2s linear infinite;
+}
+
+@keyframes dot-flash {
+  0%, 100% { opacity: 0.2; }
+  50%       { opacity: 1.0; }
+}
+
+.dot-1 { animation: dot-flash 1.2s ease infinite 0.0s; }
+.dot-2 { animation: dot-flash 1.2s ease infinite 0.2s; }
+.dot-3 { animation: dot-flash 1.2s ease infinite 0.4s; }
+.dot-4 { animation: dot-flash 1.2s ease infinite 0.6s; }
+
+@keyframes chevron-bounce {
+  0%, 100% { transform: translateY(0);   opacity: 0.4; }
+  50%       { transform: translateY(6px); opacity: 0.8; }
+}
+
+.chevron-bounce { animation: chevron-bounce 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg,
+  .logo-pulse,
+  .pulse-border,
+  .shimmer-btn,
+  .dot-1, .dot-2, .dot-3, .dot-4,
+  .chevron-bounce {
+    animation: none !important;
+  }
+}
