@@ -1,4 +1,17 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import {
+  metaMaskWallet,
+  rabbyWallet,
+  zerionWallet,
+  rainbowWallet,
+  coinbaseWallet,
+  trustWallet,
+  okxWallet,
+  phantomWallet,
+  ledgerWallet,
+  walletConnectWallet,
+  injectedWallet,
+} from '@rainbow-me/rainbowkit/wallets'
 import { defineChain } from 'viem'
 
 export const bradbury = defineChain({
@@ -52,9 +65,26 @@ if (!projectId && typeof window !== 'undefined') {
   )
 }
 
+// Explicit wallet list so popular wallets (Rabby, Zerion, etc.) appear by name on
+// BOTH desktop and mobile. On desktop RainbowKit also auto-detects installed
+// extensions via EIP-6963; on mobile there are no extensions, so only the wallets
+// registered here are surfaced (each with WalletConnect deep links). walletConnect +
+// injected remain as catch-alls for anything not listed.
+const wallets = [
+  {
+    groupName: 'Recommended',
+    wallets: [metaMaskWallet, rabbyWallet, zerionWallet, rainbowWallet, coinbaseWallet],
+  },
+  {
+    groupName: 'More',
+    wallets: [trustWallet, okxWallet, phantomWallet, ledgerWallet, walletConnectWallet, injectedWallet],
+  },
+]
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'Shipyard',
   projectId: projectId || 'shipyard-walletconnect-unconfigured',
   chains: [bradbury, asimov, studionet, localnet],
+  wallets,
   ssr: true,
 })
