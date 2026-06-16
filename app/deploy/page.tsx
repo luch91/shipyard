@@ -76,9 +76,14 @@ export default function DeployPage() {
         <SourceLoader />
       </Suspense>
 
-      <div className="mb-6">
-        <h1 className="font-mono text-xl font-bold text-white">Deploy a Contract</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+      <div className="mb-8">
+        <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-emerald-400 mb-2">
+          Deploy
+        </p>
+        <h1 className="font-sans text-2xl font-bold text-white mb-1">
+          Deploy a Contract
+        </h1>
+        <p className="text-sm text-neutral-500">
           Upload your Intelligent Contract, choose a network, and deploy in seconds.
         </p>
       </div>
@@ -101,6 +106,12 @@ export default function DeployPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="step-badge">01</span>
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+              Upload Contract
+            </span>
+          </div>
           <ContractUploader />
         </div>
         <div className="flex flex-col gap-6 lg:col-span-1">

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Eye, EyeOff, Rocket } from 'lucide-react'
+import { Rocket, Wallet } from 'lucide-react'
 import clsx from 'clsx'
+import { useAccount } from 'wagmi'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { useDeploy } from '@/hooks/useDeploy'
 import type { ContractParam } from '@/types'
@@ -15,7 +16,7 @@ function ParamInput({ param, value, onChange }: {
   onChange: (v: string) => void
 }) {
   const inputClass =
-    'w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 font-mono text-sm text-white placeholder-neutral-600 focus:border-emerald-500/60 focus:outline-none focus:ring-1 focus:ring-emerald-500/40'
+    'glass-input w-full px-3 py-2 text-sm'
 
   if (param.type === 'bool') {
     return (
@@ -75,22 +76,19 @@ function ParamInput({ param, value, onChange }: {
 export default function DeployForm() {
   const { parsedContract, constructorArgs, setConstructorArg } = useDeployStore()
   const { canDeploy, run, deploy } = useDeploy()
-
-  // Private key is local state only — never goes to Zustand
-  const [privateKey, setPrivateKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
+  const { isConnected } = useAccount()
 
   const isDeploying = deploy.status === 'deploying' || deploy.status === 'validating'
-
-  const handleDeploy = async () => {
-    if (!privateKey.trim()) return
-    await run(privateKey)
-  }
 
   if (!parsedContract) {
     return (
       <div className="flex flex-col gap-3">
-        <h2 className="font-mono text-sm font-semibold text-neutral-300">3. Configure & Deploy</h2>
+        <div className="flex items-center gap-2">
+          <span className="step-badge">03</span>
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+            Configure & Deploy
+          </span>
+        </div>
         <div className="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-8 text-center">
           <p className="text-sm text-neutral-600">
             Upload a valid contract to see constructor parameters.
@@ -129,58 +127,43 @@ export default function DeployForm() {
         </div>
       )}
 
-      {/* Private key */}
-      <div className="flex flex-col gap-1">
-        <label className="font-mono text-xs text-neutral-400">
-          Private key <span className="text-neutral-600">(never stored)</span>
-        </label>
-        <div className="relative">
-          <input
-            type={showKey ? 'text' : 'password'}
-            value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
-            placeholder="0x…"
-            className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 pr-10 font-mono text-sm text-white placeholder-neutral-600 focus:border-emerald-500/60 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
-            aria-label="Private key for signing the deploy transaction"
-          />
-          <button
-            type="button"
-            onClick={() => setShowKey((p) => !p)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-400 focus:outline-none"
-            aria-label={showKey ? 'Hide private key' : 'Show private key'}
-          >
-            {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-          </button>
+      {/* Wallet connection */}
+      {!isConnected ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-900/60 p-4">
+          <div className="flex items-center gap-2 text-neutral-400">
+            <Wallet size={14} />
+            <span className="font-mono text-xs">Connect wallet to deploy</span>
+          </div>
+          <div className="flex">
+            <ConnectButton chainStatus="none" />
+          </div>
         </div>
-        <p className="text-[11px] text-neutral-600">
-          Use a throwaway testnet key. Never use a mainnet private key.
-        </p>
-      </div>
-
-      {/* Deploy button */}
-      <button
-        type="button"
-        onClick={handleDeploy}
-        disabled={!canDeploy || !privateKey.trim() || isDeploying}
-        className={clsx(
-          'flex items-center justify-center gap-2 rounded-md px-4 py-3 font-mono text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
-          canDeploy && privateKey.trim() && !isDeploying
-            ? 'bg-emerald-500 text-neutral-950 hover:bg-emerald-400'
-            : 'cursor-not-allowed bg-neutral-800 text-neutral-600'
-        )}
-      >
-        {isDeploying ? (
-          <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-600 border-t-emerald-400" />
-            Deploying…
-          </>
-        ) : (
-          <>
-            <Rocket size={15} />
-            Deploy Contract
-          </>
-        )}
-      </button>
+      ) : (
+        /* Deploy button */
+        <button
+          type="button"
+          onClick={run}
+          disabled={!canDeploy || isDeploying}
+          className={clsx(
+            'flex items-center justify-center gap-2 rounded-md px-4 py-3 font-mono text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
+            canDeploy && !isDeploying
+              ? 'bg-emerald-500 text-neutral-950 hover:bg-emerald-400'
+              : 'cursor-not-allowed bg-neutral-800 text-neutral-600'
+          )}
+        >
+          {isDeploying ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-600 border-t-emerald-400" />
+              Deploying…
+            </>
+          ) : (
+            <>
+              <Rocket size={15} />
+              Deploy Contract
+            </>
+          )}
+        </button>
+      )}
     </div>
   )
 }

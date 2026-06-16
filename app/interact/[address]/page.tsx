@@ -9,6 +9,22 @@ import ContractPanel from '@/components/interact/ContractPanel'
 import { NETWORKS } from '@/lib/genlayer/networks'
 import type { NetworkId } from '@/types'
 
+// Back link — goes to /history if arrived from there, otherwise /deploy
+function BackLink() {
+  const searchParams = useSearchParams()
+  const from         = searchParams.get('from')
+
+  return (
+    <Link
+      href={from === 'history' ? '/history' : '/deploy'}
+      className="mb-6 inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-300 focus:outline-none"
+    >
+      <ArrowLeft size={12} />
+      {from === 'history' ? 'Back to history' : 'Back to deploy'}
+    </Link>
+  )
+}
+
 export default function InteractPage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -29,13 +45,7 @@ export default function InteractPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <Link
-        href="/deploy"
-        className="mb-6 inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-300 focus:outline-none"
-      >
-        <ArrowLeft size={12} />
-        Back to deploy
-      </Link>
+      <BackLink />
 
       <h1 className="mb-6 font-mono text-xl font-bold text-white">Interact</h1>
 

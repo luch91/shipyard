@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff, Zap } from 'lucide-react'
+import { Zap } from 'lucide-react'
 import clsx from 'clsx'
+import { useAccount, useSwitchChain } from 'wagmi'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { deployContract } from '@/lib/genlayer/deploy'
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
+import { NETWORKS } from '@/lib/genlayer/networks'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -26,13 +29,14 @@ function NetworkColumn({
   networkId,
   contractSource,
   constructorArgs,
-  privateKey,
 }: {
   networkId: NetworkId
   contractSource: string
   constructorArgs: Record<string, string>
-  privateKey: string
 }) {
+  const { address, chainId, isConnected, connector } = useAccount()
+  const { switchChainAsync } = useSwitchChain()
+
   const [state, setState] = useState<ColState>({
     status: 'idle',
     logs: [],
@@ -41,6 +45,20 @@ function NetworkColumn({
   })
 
   const deploy = async () => {
+    if (!isConnected || !address || !connector) return
+
+    const targetChainId = NETWORKS[networkId].chainId
+    if (chainId !== targetChainId) {
+      try {
+        await switchChainAsync({ chainId: targetChainId })
+      } catch {
+        setState((s) => ({ ...s, status: 'error', error: 'Please switch to the correct network in your wallet.' }))
+        return
+      }
+    }
+
+    const provider = await connector.getProvider()
+
     setState({ status: 'deploying', logs: [], result: null, error: null })
 
     const addLog = (log: Omit<DeployLog, 'id' | 'timestamp'>) =>
@@ -54,7 +72,8 @@ function NetworkColumn({
         contractSource,
         constructorArgs,
         networkId,
-        privateKey,
+        address,
+        provider,
         onLog: addLog,
       })
       setState((s) => ({ ...s, status: 'success', result }))
@@ -82,7 +101,7 @@ function NetworkColumn({
           variant="primary"
           size="sm"
           loading={state.status === 'deploying'}
-          disabled={!contractSource || !privateKey}
+          disabled={!contractSource || !isConnected}
           onClick={deploy}
         >
           Deploy
@@ -127,12 +146,11 @@ function NetworkColumn({
 
 export default function ComparePage() {
   const { contractSource: storeSource, parsedContract } = useDeployStore()
+  const { isConnected } = useAccount()
 
   const [source, setSource] = useState(storeSource)
   const [networkA, setNetworkA] = useState<NetworkId>('testnet-bradbury')
   const [networkB, setNetworkB] = useState<NetworkId>('studionet')
-  const [privateKey, setPrivateKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
   const [constructorArgs, setConstructorArgs] = useState<Record<string, string>>({})
 
   const parsed = source ? (validateContract(source).valid ? parseContract(source) : null) : parsedContract
@@ -214,30 +232,13 @@ export default function ComparePage() {
           )}
         </div>
 
-        {/* Private key */}
-        <div>
-          <label className="mb-1 block font-mono text-xs text-neutral-400">
-            Private key <span className="text-neutral-600">(used for both networks)</span>
-          </label>
-          <div className="relative">
-            <input
-              type={showKey ? 'text' : 'password'}
-              value={privateKey}
-              onChange={(e) => setPrivateKey(e.target.value)}
-              placeholder="0x…"
-              className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 pr-10 font-mono text-xs text-white placeholder-neutral-600 focus:border-emerald-500/60 focus:outline-none"
-              aria-label="Private key"
-            />
-            <button
-              type="button"
-              onClick={() => setShowKey((p) => !p)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-400 focus:outline-none"
-              aria-label={showKey ? 'Hide key' : 'Show key'}
-            >
-              {showKey ? <EyeOff size={13} /> : <Eye size={13} />}
-            </button>
+        {/* Wallet connect prompt */}
+        {!isConnected && (
+          <div className="flex items-center justify-between rounded-md border border-neutral-800 bg-neutral-900/60 px-4 py-3">
+            <p className="font-mono text-xs text-neutral-400">Connect wallet to deploy</p>
+            <ConnectButton chainStatus="none" />
           </div>
-        </div>
+        )}
       </Card>
 
       {/* Side-by-side columns */}
@@ -252,7 +253,6 @@ export default function ComparePage() {
             networkId={networkA}
             contractSource={storeSource || source}
             constructorArgs={constructorArgs}
-            privateKey={privateKey}
           />
         </div>
         <div>
@@ -261,7 +261,6 @@ export default function ComparePage() {
             networkId={networkB}
             contractSource={storeSource || source}
             constructorArgs={constructorArgs}
-            privateKey={privateKey}
           />
         </div>
       </div>

@@ -1,11 +1,11 @@
 import type { DeployOptions, DeployResult } from '@/types'
-import { createSignerClient } from './client'
+import { createSignerClientWithProvider } from './client'
 import { validateContract } from './parser'
 
 // ─── Deploy ───────────────────────────────────────────────────────────────────
 
 export async function deployContract(options: DeployOptions): Promise<DeployResult> {
-  const { contractSource, constructorArgs, networkId, privateKey, onLog } = options
+  const { contractSource, constructorArgs, networkId, address, provider, onLog } = options
 
   // 1. Validate
   onLog({ level: 'info', message: 'Validating contract source...' })
@@ -22,9 +22,9 @@ export async function deployContract(options: DeployOptions): Promise<DeployResu
 
   // 2. Create signer client
   onLog({ level: 'info', message: `Connecting to ${networkId}...` })
-  let client: Awaited<ReturnType<typeof createSignerClient>>
+  let client: Awaited<ReturnType<typeof createSignerClientWithProvider>>
   try {
-    client = await createSignerClient(networkId, privateKey)
+    client = await createSignerClientWithProvider(networkId, address, provider)
   } catch (err) {
     const msg = `Could not connect to ${networkId}. Check your connection or try a different network.`
     onLog({ level: 'error', message: msg })

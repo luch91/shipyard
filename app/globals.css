@@ -121,3 +121,87 @@
     animation: none !important;
   }
 }
+
+/* ─── Shipyard App Glass System ─────────────────────────────────────────────── */
+
+/* Glass card — applied via Card.tsx, replaces flat neutral-900 */
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(52, 211, 153, 0.03)
+  );
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.11);
+}
+
+/* Emerald glass — for active/selected/highlighted states */
+.glass-card-emerald {
+  border-color: rgba(52, 211, 153, 0.2);
+  background: linear-gradient(
+    135deg,
+    rgba(52, 211, 153, 0.06),
+    rgba(52, 211, 153, 0.02)
+  );
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(52, 211, 153, 0.1);
+}
+
+/* Glass input — subtle depth on form fields */
+.glass-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: 'Fira Code', monospace;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.glass-input::placeholder {
+  color: rgba(115, 115, 115, 0.7);
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Sidebar ambient glow — static, single radial at top, very subtle */
+.sidebar-glow {
+  background:
+    radial-gradient(
+      ellipse 140px 80px at 50% 0%,
+      rgba(52, 211, 153, 0.05) 0%,
+      transparent 70%
+    ),
+    #090909;
+}
+
+/* Step badge — deploy page step labels (01 / 02 / 03) */
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  min-width: 22px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #34d399;
+  flex-shrink: 0;
+}

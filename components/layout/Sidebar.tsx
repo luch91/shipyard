@@ -1,120 +1,149 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Trash2, ExternalLink, History, Download, Upload } from 'lucide-react'
+import {
+  Anchor, Rocket, LayoutTemplate,
+  GitCompare, Database, History,
+  BookOpen, ChevronLeft, ChevronRight,
+  Menu, X,
+} from 'lucide-react'
 import clsx from 'clsx'
-import toast from 'react-hot-toast'
-import NetworkBadge from '@/components/ui/NetworkBadge'
-import type { DeploymentRecord, NetworkId } from '@/types'
-import { useSidebar } from '@/components/providers/SidebarContext'
+import type { DeploymentRecord } from '@/types'
 
-const HISTORY_KEY = 'gendeploy:deployments'
+// ── Nav config ────────────────────────────────────────────────────────────────
 
-function timeAgo(ts: number): string {
-  const diff = Date.now() - ts
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return `${Math.floor(hrs / 24)}d ago`
+const NAV_ITEMS = [
+  { href: '/deploy',    label: 'Deploy',    Icon: Rocket,         soon: false },
+  { href: '/templates', label: 'Templates', Icon: LayoutTemplate, soon: false },
+  { href: '/compare',   label: 'Compare',   Icon: GitCompare,     soon: false },
+  { href: '/registry',  label: 'Registry',  Icon: Database,       soon: true  },
+  { href: '/history',   label: 'History',   Icon: History,        soon: false },
+] as const
+
+// ── Nav item ──────────────────────────────────────────────────────────────────
+
+function NavItem({
+  href, label, Icon, active, soon, badge, collapsed,
+}: {
+  href:      string
+  label:     string
+  Icon:      React.ElementType
+  active:    boolean
+  soon?:     boolean
+  badge?:    number
+  collapsed: boolean
+}) {
+  if (collapsed) {
+    return (
+      <Link
+        href={href}
+        title={label}
+        className={clsx(
+          'relative flex h-8 w-8 items-center justify-center rounded-lg transition-all',
+          active
+            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+            : 'text-neutral-600 hover:bg-white/[0.04] hover:text-neutral-300'
+        )}
+      >
+        <Icon size={14} />
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30 font-mono text-[8px] text-emerald-400">
+            {badge > 9 ? '9+' : badge}
+          </span>
+        )}
+      </Link>
+    )
+  }
+
+  return (
+    <Link
+      href={href}
+      className={clsx(
+        'flex items-center gap-2.5 rounded-lg px-2.5 py-[7px]',
+        'text-xs font-medium transition-all duration-150',
+        active
+          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          : 'text-neutral-500 border border-transparent hover:bg-white/[0.03] hover:text-neutral-300'
+      )}
+    >
+      <Icon size={13} className="shrink-0" />
+      <span className="font-mono flex-1 min-w-0">{label}</span>
+      {soon && (
+        <span className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          Soon
+        </span>
+      )}
+      {badge !== undefined && badge > 0 && !soon && (
+        <span className="shrink-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500/15 px-1 font-mono text-[9px] text-emerald-400">
+          {badge > 9 ? '9+' : badge}
+        </span>
+      )}
+    </Link>
+  )
 }
 
-export default function Sidebar() {
-  const pathname = usePathname()
-  const [open, setOpen] = useState(true)
-  const [deployments, setDeployments] = useState<DeploymentRecord[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const { mobileOpen, setMobileOpen } = useSidebar()
+// ── Main Sidebar ──────────────────────────────────────────────────────────────
 
+export default function Sidebar() {
+  const pathname              = usePathname()
+  const [open, setOpen]       = useState(true)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [count, setCount]     = useState(0)
+
+  // Read deployment count from localStorage only — no database
   useEffect(() => {
-    const load = () => {
+    const loadCount = () => {
       try {
-        const raw = localStorage.getItem(HISTORY_KEY)
-        setDeployments(raw ? JSON.parse(raw) : [])
-      } catch { /* non-fatal */ }
+        const raw = localStorage.getItem('gendeploy:deployments')
+        const local: DeploymentRecord[] = raw ? JSON.parse(raw) : []
+        setCount(local.length)
+      } catch {
+        setCount(0)
+      }
     }
-    load()
-    window.addEventListener('storage', load)
-    const interval = setInterval(load, 3000)
-    return () => {
-      window.removeEventListener('storage', load)
-      clearInterval(interval)
-    }
+
+    loadCount()
+    // Re-check every few seconds in case a deploy just completed
+    const interval = setInterval(loadCount, 3000)
+    return () => clearInterval(interval)
   }, [])
 
   // Close mobile drawer on route change
   useEffect(() => {
     setMobileOpen(false)
-  }, [pathname, setMobileOpen])
+  }, [pathname])
 
+  // Hide on landing page
   if (pathname === '/') return null
 
-  const clearHistory = () => {
-    try {
-      localStorage.removeItem(HISTORY_KEY)
-      setDeployments([])
-    } catch { /* non-fatal */ }
+  const isActive = (href: string) => {
+    if (href === '/history') return pathname === '/history'
+    return pathname.startsWith(href)
   }
 
-  const exportHistory = () => {
-    try {
-      const sources: Record<string, string> = {}
-      for (const d of deployments) {
-        const src = localStorage.getItem(`gendeploy:source:${d.address}`)
-        if (src) sources[d.address] = src
-      }
-      const data = { version: 1, exportedAt: Date.now(), deployments, sources }
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `shipyard-history-${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch { /* non-fatal */ }
-  }
-
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target?.result as string)
-        if (!Array.isArray(data.deployments)) {
-          toast.error('Invalid history file.')
-          return
-        }
-        if (data.sources && typeof data.sources === 'object') {
-          for (const [address, src] of Object.entries(data.sources)) {
-            if (typeof src === 'string' && !localStorage.getItem(`gendeploy:source:${address}`)) {
-              localStorage.setItem(`gendeploy:source:${address}`, src)
-            }
-          }
-        }
-        const existingAddresses = new Set(deployments.map((d) => d.address))
-        const incoming = (data.deployments as DeploymentRecord[]).filter(
-          (d) => d.address && d.contractName && d.network && d.deployedAt && !existingAddresses.has(d.address)
-        )
-        const merged = [...deployments, ...incoming]
-          .sort((a, b) => b.deployedAt - a.deployedAt)
-          .slice(0, 50)
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(merged))
-        setDeployments(merged)
-        toast.success(`Imported ${incoming.length} deployment${incoming.length !== 1 ? 's' : ''}.`)
-      } catch {
-        toast.error('Could not read history file.')
-      }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
-  }
+  // Expanded content is shown when the desktop sidebar is open OR the mobile
+  // drawer is open. Collapsed (icon-only) content shows only on a collapsed desktop.
+  const showExpanded  = open || mobileOpen
+  const showCollapsed = !open && !mobileOpen
 
   return (
     <>
+      {/* Mobile trigger — only below lg, hidden while the drawer is open */}
+      {!mobileOpen && (
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="fixed right-3 top-3 z-30 flex h-9 w-9 items-center justify-center
+                     rounded-lg border border-white/[0.08] bg-neutral-900/90 text-neutral-300
+                     backdrop-blur-sm hover:text-white focus:outline-none lg:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu size={16} />
+        </button>
+      )}
+
       {/* Backdrop — mobile only, closes drawer on tap */}
       {mobileOpen && (
         <div
@@ -126,119 +155,118 @@ export default function Sidebar() {
 
       <aside
         className={clsx(
-          'shrink-0 flex flex-col border-r border-neutral-800 bg-neutral-950',
-          // Mobile: fixed overlay that slides in from the left
-          'fixed bottom-0 left-0 top-14 z-50 w-64',
+          'relative flex shrink-0 flex-col border-r border-white/[0.06] sidebar-glow',
+          // Mobile: fixed off-canvas drawer
+          'fixed inset-y-0 left-0 z-50 w-52',
           'transition-transform duration-200 ease-in-out',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
-          // Desktop: in-flow relative panel, standard collapse
+          // Desktop: in-flow, collapsible
           'lg:relative lg:z-auto lg:translate-x-0 lg:transition-all lg:duration-200',
-          open ? 'lg:w-56' : 'lg:w-10',
+          open ? 'lg:w-52' : 'lg:w-12'
         )}
       >
-        {/* Toggle button — desktop only */}
+        {/* Desktop collapse toggle */}
         <button
           type="button"
-          onClick={() => setOpen((p) => !p)}
-          className="absolute -right-3 top-5 z-10 hidden lg:flex h-6 w-6 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 text-neutral-400 hover:text-white focus:outline-none"
+          onClick={() => setOpen(p => !p)}
+          className="absolute -right-3 top-5 z-10 hidden lg:flex h-6 w-6 items-center
+                     justify-center rounded-full border border-white/[0.08]
+                     bg-neutral-900 text-neutral-500 hover:text-neutral-300
+                     focus:outline-none transition-colors"
           aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
         >
-          {open ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+          {open ? <ChevronLeft size={11} /> : <ChevronRight size={11} />}
         </button>
 
-        {/* Full content — shown when desktop open OR mobile drawer open */}
-        {(open || mobileOpen) && (
+        {/* Mobile close button — only inside the open drawer */}
+        {mobileOpen && (
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="absolute right-2 top-3 z-10 flex h-7 w-7 items-center justify-center
+                       rounded-lg text-neutral-500 hover:text-neutral-200 focus:outline-none lg:hidden"
+            aria-label="Close navigation"
+          >
+            <X size={16} />
+          </button>
+        )}
+
+        {/* ── EXPANDED ───────────────────────────────────────────────────────── */}
+        {showExpanded && (
           <div className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b border-neutral-800 px-3 py-3">
-              <div className="flex items-center gap-1.5">
-                <History size={13} className="text-neutral-500" />
-                <span className="font-mono text-xs font-semibold text-neutral-400">Deployments</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
-                  aria-label="Import deployment history"
-                >
-                  <Upload size={14} strokeWidth={2.5} />
-                </button>
-                {deployments.length > 0 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={exportHistory}
-                      className="text-neutral-400 hover:text-emerald-400 focus:outline-none"
-                      aria-label="Export deployment history"
-                    >
-                      <Download size={14} strokeWidth={2.5} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={clearHistory}
-                      className="text-neutral-400 hover:text-red-400 focus:outline-none"
-                      aria-label="Clear deployment history"
-                    >
-                      <Trash2 size={14} strokeWidth={2.5} />
-                    </button>
-                  </>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleImportFile}
-                className="hidden"
-              />
+
+            {/* Logo */}
+            <div className="px-3 py-4 border-b border-white/[0.05]">
+              <Link
+                href="/"
+                className="flex items-center gap-2 font-mono text-sm font-semibold
+                           text-white hover:text-emerald-400 transition-colors"
+              >
+                <Anchor size={16} className="text-emerald-400 shrink-0" />
+                <span>Ship<span className="text-emerald-400">yard</span></span>
+              </Link>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-2">
-              {deployments.length === 0 ? (
-                <p className="px-3 py-4 text-center text-[11px] text-neutral-700">
-                  No deployments yet
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-0.5 px-2">
-                  {deployments.map((d, i) => (
-                    <li key={`${d.address}-${i}`}>
-                      <Link
-                        href={`/interact/${d.address}?network=${d.network}`}
-                        className="group flex flex-col gap-1 rounded-md px-2 py-2 transition-colors hover:bg-neutral-800/60"
-                      >
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="truncate font-mono text-xs font-medium text-white group-hover:text-emerald-400">
-                            {d.contractName || 'Contract'}
-                          </span>
-                          <ExternalLink size={10} className="shrink-0 text-neutral-700 group-hover:text-neutral-500" />
-                        </div>
-                        <NetworkBadge networkId={d.network as NetworkId} size="sm" />
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="truncate font-mono text-[10px] text-neutral-600">
-                            {d.address.slice(0, 10)}…
-                          </span>
-                          <span className="shrink-0 text-[10px] text-neutral-700">
-                            {timeAgo(d.deployedAt)}
-                          </span>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            {/* Nav links */}
+            <nav className="flex flex-col gap-1 px-2 py-3 border-b border-white/[0.05]">
+              <p className="px-2 mb-1 font-mono text-[9px] tracking-[0.2em]
+                            uppercase text-neutral-700">
+                Navigate
+              </p>
+              {NAV_ITEMS.map(({ href, label, Icon, soon }) => (
+                <NavItem
+                  key={href}
+                  href={href}
+                  label={label}
+                  Icon={Icon}
+                  active={isActive(href)}
+                  soon={soon}
+                  badge={href === '/history' ? count : undefined}
+                  collapsed={false}
+                />
+              ))}
+            </nav>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Docs link */}
+            <div className="border-t border-white/[0.05] px-2 py-3">
+              <a
+                href="https://docs.genlayer.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 rounded-lg px-2.5 py-[7px]
+                           font-mono text-xs font-medium text-neutral-600
+                           hover:bg-white/[0.03] hover:text-neutral-300
+                           border border-transparent transition-all"
+              >
+                <BookOpen size={13} className="shrink-0" />
+                <span className="flex-1">Docs</span>
+                <span className="text-[10px] opacity-40">↗</span>
+              </a>
             </div>
           </div>
         )}
 
-        {/* Collapsed icon — desktop only */}
-        {!open && (
-          <div className="hidden lg:flex flex-1 flex-col items-center pt-5">
-            <History size={14} className="text-neutral-600" />
-            {deployments.length > 0 && (
-              <span className="mt-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 font-mono text-[9px] text-emerald-400">
-                {deployments.length > 9 ? '9+' : deployments.length}
-              </span>
-            )}
+        {/* ── COLLAPSED ──────────────────────────────────────────────────────── */}
+        {showCollapsed && (
+          <div className="flex flex-1 flex-col items-center gap-1.5 py-4">
+            <Link href="/" className="mb-2">
+              <Anchor size={16} className="text-emerald-400" />
+            </Link>
+            {NAV_ITEMS.map(({ href, label, Icon, soon }) => (
+              <NavItem
+                key={href}
+                href={href}
+                label={label}
+                Icon={Icon}
+                active={isActive(href)}
+                soon={soon}
+                badge={href === '/history' ? count : undefined}
+                collapsed={true}
+              />
+            ))}
           </div>
         )}
       </aside>

@@ -65,6 +65,22 @@ export async function createEphemeralClient(networkId: NetworkId): Promise<{
   }
 }
 
+/**
+ * Signer client backed by an EIP-1193 provider (e.g. MetaMask via wagmi connector).
+ * Uses eth_sendTransaction so MetaMask shows a confirmation popup.
+ * The wallet must already be on the correct chain before calling.
+ */
+export async function createSignerClientWithProvider(
+  networkId: NetworkId,
+  address: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  provider: any
+): Promise<GenLayerClient> {
+  const { createClient } = await import('genlayer-js')
+  const chain = await getChain(networkId)
+  return createClient({ chain, account: address as `0x${string}`, provider })
+}
+
 // ─── Convenience Wrappers ─────────────────────────────────────────────────────
 
 export async function readContractMethod(
@@ -89,6 +105,25 @@ export async function writeContractMethod(
   args: unknown[] = []
 ): Promise<string> {
   const client = await createSignerClient(networkId, privateKey)
+  const hash = await client.writeContract({
+    address: contractAddress as `0x${string}`,
+    functionName: methodName,
+    args,
+    value: BigInt(0),
+  })
+  return hash as string
+}
+
+export async function writeContractMethodWithProvider(
+  networkId: NetworkId,
+  address: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  provider: any,
+  contractAddress: string,
+  methodName: string,
+  args: unknown[] = []
+): Promise<string> {
+  const client = await createSignerClientWithProvider(networkId, address, provider)
   const hash = await client.writeContract({
     address: contractAddress as `0x${string}`,
     functionName: methodName,

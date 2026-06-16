@@ -35,7 +35,7 @@ function TemplateCard({ template }: { template: ContractTemplate }) {
   }
 
   return (
-    <div className="flex flex-col rounded-lg border border-neutral-800 bg-neutral-900">
+    <div className="glass-card flex flex-col">
       <div className="flex items-start justify-between gap-4 p-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -96,10 +96,15 @@ function TemplateCard({ template }: { template: ContractTemplate }) {
 export default function TemplatesPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="font-mono text-xl font-bold text-white">Contract Templates</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Start from a working example. Click "Use" to load a template into the deploy flow.
+      <div className="mb-8">
+        <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-emerald-400 mb-2">
+          Templates
+        </p>
+        <h1 className="font-sans text-2xl font-bold text-white mb-1">
+          Contract Templates
+        </h1>
+        <p className="text-sm text-neutral-500">
+          Start from a working example. Click Use to load a template into the deploy flow.
         </p>
       </div>
 

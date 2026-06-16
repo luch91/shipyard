@@ -1,8 +1,10 @@
 'use client'
 
+import { useAccount, useSwitchChain } from 'wagmi'
 import { useDeployStore } from './useDeployStore'
 import { deployContract } from '@/lib/genlayer/deploy'
 import { track } from '@/lib/analytics'
+import { NETWORKS } from '@/lib/genlayer/networks'
 import type { DeployLog } from '@/types'
 
 // ─── Arg Coercion ─────────────────────────────────────────────────────────────
@@ -45,6 +47,9 @@ function coerceArgs(
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useDeploy() {
+  const { address, chainId, isConnected, connector } = useAccount()
+  const { switchChainAsync } = useSwitchChain()
+
   const {
     contractSource,
     parsedContract,
@@ -61,11 +66,27 @@ export function useDeploy() {
   const canDeploy =
     !!contractSource.trim() &&
     !!parsedContract?.className &&
+    isConnected &&
+    !!address &&
     deploy.status !== 'deploying' &&
     deploy.status !== 'validating'
 
-  async function run(privateKey: string) {
-    if (!canDeploy) return
+  async function run() {
+    if (!canDeploy || !address || !connector) return
+
+    // Switch to the selected network if needed
+    const targetChainId = NETWORKS[selectedNetwork].chainId
+    if (chainId !== targetChainId) {
+      try {
+        await switchChainAsync({ chainId: targetChainId })
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Network switch rejected.'
+        setDeployError(`Please switch your wallet to ${NETWORKS[selectedNetwork].name}: ${msg}`)
+        return
+      }
+    }
+
+    const provider = await connector.getProvider()
 
     const startTime = Date.now()
     const contractName = parsedContract?.className ?? 'Unknown'
@@ -92,16 +113,12 @@ export function useDeploy() {
         contractSource,
         constructorArgs: argsForDeploy,
         networkId: selectedNetwork,
-        privateKey,
+        address,
+        provider,
         onLog,
       })
 
-      // Attach contract name from parsed contract
-      const enriched = {
-        ...result,
-        contractName,
-      }
-
+      const enriched = { ...result, contractName }
       setDeployResult(enriched)
 
       track('deployment_succeeded', {
@@ -111,7 +128,6 @@ export function useDeploy() {
         duration_ms: Date.now() - startTime,
       })
 
-      // Persist to deployment history in localStorage
       try {
         const historyKey = 'gendeploy:deployments'
         const existing = JSON.parse(localStorage.getItem(historyKey) ?? '[]')
@@ -121,10 +137,8 @@ export function useDeploy() {
           network: enriched.network,
           deployedAt: enriched.deployedAt,
         })
-        // Keep last 50
         localStorage.setItem(historyKey, JSON.stringify(existing.slice(0, 50)))
 
-        // Save contract source keyed by address so interact page can auto-load it
         if (enriched.contractAddress) {
           localStorage.setItem(`gendeploy:source:${enriched.contractAddress}`, contractSource)
         }
@@ -132,8 +146,7 @@ export function useDeploy() {
         // localStorage may not be available — non-fatal
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'An unexpected error occurred.'
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred.'
       setDeployError(message)
 
       track('deployment_failed', {

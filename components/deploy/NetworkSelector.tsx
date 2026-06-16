@@ -6,6 +6,7 @@ import { useDeployStore } from '@/hooks/useDeployStore'
 import { useNetworkHealth } from '@/hooks/useNetworkHealth'
 import type { HealthStatus } from '@/hooks/useNetworkHealth'
 import { Signal, SignalMedium, SignalZero } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { track } from '@/lib/analytics'
 import type { NetworkId } from '@/types'
 import clsx from 'clsx'
@@ -32,7 +33,12 @@ export default function NetworkSelector() {
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="font-mono text-sm font-semibold text-neutral-300">2. Network</h2>
+      <div className="flex items-center gap-2">
+        <span className="step-badge">02</span>
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+          Network
+        </span>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         {networks.map((network) => {
           const colors = NETWORK_COLOR_CLASSES[network.id as NetworkId]
@@ -43,6 +49,9 @@ export default function NetworkSelector() {
               key={network.id}
               type="button"
               onClick={() => {
+                if (network.id !== selectedNetwork) {
+                  toast.success(`Now targeting ${network.name}`)
+                }
                 setSelectedNetwork(network.id as NetworkId)
                 track('network_selected', { network_id: network.id, network_name: network.name })
               }}
@@ -50,7 +59,7 @@ export default function NetworkSelector() {
                 'relative flex flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
                 isSelected
                   ? [colors.border, colors.bg, 'ring-1', colors.border]
-                  : 'border-neutral-800 bg-neutral-900 hover:border-neutral-700 hover:bg-neutral-800/60'
+                  : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1] hover:bg-white/[0.04]'
               )}
               aria-pressed={isSelected}
               aria-label={`Select ${network.name}`}

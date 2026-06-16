@@ -3,20 +3,28 @@ import type { HTMLAttributes } from 'react'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: 'sm' | 'md' | 'lg' | 'none'
+  variant?: 'default' | 'emerald'
 }
 
-export default function Card({ padding = 'md', className, children, ...rest }: CardProps) {
+export default function Card({
+  padding  = 'md',
+  variant  = 'default',
+  className,
+  children,
+  ...rest
+}: CardProps) {
   const paddings = {
     none: '',
-    sm: 'p-3',
-    md: 'p-4',
-    lg: 'p-6',
+    sm:   'p-3',
+    md:   'p-4',
+    lg:   'p-6',
   }
 
   return (
     <div
       className={clsx(
-        'rounded-lg border border-neutral-800 bg-neutral-900',
+        'glass-card',
+        variant === 'emerald' && 'glass-card-emerald',
         paddings[padding],
         className
       )}

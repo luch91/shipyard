@@ -75,7 +75,9 @@ export interface DeployOptions {
   contractSource: string
   constructorArgs: Record<string, unknown>
   networkId: NetworkId
-  privateKey: string
+  address: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  provider: any
   onLog: (log: Omit<DeployLog, 'id' | 'timestamp'>) => void
 }
 
@@ -109,4 +111,6 @@ export interface DeploymentRecord {
   contractName: string
   network: NetworkId
   deployedAt: number
+  txHash?: string
+  constructorParams?: Record<string, unknown>
 }

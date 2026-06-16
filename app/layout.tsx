@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { headers } from 'next/headers'
 import { Toaster } from 'react-hot-toast'
 import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
 import { PostHogPageView } from '@/components/providers/PostHogPageView'
 import { SidebarProvider } from '@/components/providers/SidebarContext'
+import { Web3Provider } from '@/components/providers/Web3Provider'
+import '@rainbow-me/rainbowkit/styles.css'
 import './globals.css'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://genshipyard.com'
@@ -60,6 +63,8 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookie = headers().get('cookie')
+
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-neutral-950 font-sans antialiased">
@@ -67,11 +72,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <Web3Provider cookie={cookie}>
         <PostHogProvider>
         <SidebarProvider>
         <Suspense><PostHogPageView /></Suspense>
         <Header />
-        <div className="flex" style={{ minHeight: 'calc(100vh - 56px)' }}>
+        <div className="flex min-h-screen">
           <Sidebar />
           <main className="min-w-0 flex-1">{children}</main>
         </div>
@@ -117,6 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         </SidebarProvider>
         </PostHogProvider>
+        </Web3Provider>
       </body>
     </html>
   )

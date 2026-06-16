@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Wallet } from 'lucide-react'
+import { useAccount } from 'wagmi'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import type { ContractMethod } from '@/types'
 import { useWriteMethod } from '@/hooks/useContract'
 import Card from '@/components/ui/Card'
@@ -16,12 +18,10 @@ function WriteMethodCard({
   contractAddress: string
 }) {
   const { execute, loading, txHash, error } = useWriteMethod(contractAddress, method.name)
+  const { isConnected } = useAccount()
   const [args, setArgs] = useState<Record<string, string>>({})
-  const [privateKey, setPrivateKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
 
   const handleExecute = () => {
-    if (!privateKey.trim()) return
     const argsArray = method.params.map((p) => {
       const raw = args[p.name] ?? ''
       switch (p.type) {
@@ -35,7 +35,7 @@ function WriteMethodCard({
         default: return raw
       }
     })
-    execute(privateKey, argsArray)
+    execute(argsArray)
   }
 
   return (
@@ -71,35 +71,26 @@ function WriteMethodCard({
         </div>
       )}
 
-      <div className="mb-3 flex items-center gap-2">
-        <div className="relative flex-1">
-          <input
-            type={showKey ? 'text' : 'password'}
-            value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
-            placeholder="Private key (0x…)"
-            className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1.5 pr-8 font-mono text-xs text-white placeholder-neutral-600 focus:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
-            aria-label="Private key for signing"
-          />
-          <button
-            type="button"
-            onClick={() => setShowKey((p) => !p)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-400 focus:outline-none"
-            aria-label={showKey ? 'Hide key' : 'Show key'}
-          >
-            {showKey ? <EyeOff size={12} /> : <Eye size={12} />}
-          </button>
+      {!isConnected ? (
+        <div className="mb-3 flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900/60 px-3 py-2">
+          <Wallet size={13} className="shrink-0 text-neutral-500" />
+          <span className="font-mono text-xs text-neutral-500">Connect wallet to execute</span>
+          <div className="ml-auto scale-90 origin-right">
+            <ConnectButton chainStatus="none" />
+          </div>
         </div>
-        <Button
-          variant="danger"
-          size="sm"
-          loading={loading}
-          disabled={!privateKey.trim()}
-          onClick={handleExecute}
-        >
-          Execute
-        </Button>
-      </div>
+      ) : (
+        <div className="mb-3 flex justify-end">
+          <Button
+            variant="danger"
+            size="sm"
+            loading={loading}
+            onClick={handleExecute}
+          >
+            Execute
+          </Button>
+        </div>
+      )}
 
       {txHash && (
         <div className="rounded-md bg-neutral-950 p-3">
