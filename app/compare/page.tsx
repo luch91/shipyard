@@ -213,7 +213,7 @@ export default function ComparePage() {
         )}
 
         {/* Network pickers */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {([['Network A', networkA, setNetworkA], ['Network B', networkB, setNetworkB]] as const).map(
             ([label, value, setter]) => (
               <div key={label}>

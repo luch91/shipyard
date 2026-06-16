@@ -5,6 +5,7 @@ import { Upload, Clipboard, FileCode, Sparkles } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import clsx from 'clsx'
 import { useDeployStore } from '@/hooks/useDeployStore'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
 import { track } from '@/lib/analytics'
 import toast from 'react-hot-toast'
@@ -17,6 +18,7 @@ type TabId = 'upload' | 'paste' | 'generate'
 
 export default function ContractUploader() {
   const { contractSource, setContractSource, setParsedContract, setConstructorArg } = useDeployStore()
+  const isMobile = useIsMobile()
   const [isDragging, setIsDragging] = useState(false)
   const [showEditor, setShowEditor] = useState(!!contractSource)
   const [parseError, setParseError] = useState<string | null>(null)
@@ -192,23 +194,39 @@ export default function ContractUploader() {
               clear
             </button>
           </div>
-          <MonacoEditor
-            height="340px"
-            language="python"
-            theme="vs-dark"
-            value={contractSource}
-            onChange={handleEditorChange}
-            options={{
-              fontSize: 13,
-              fontFamily: 'Fira Code, monospace',
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers: 'on',
-              tabSize: 4,
-              wordWrap: 'on',
-              padding: { top: 12 },
-            }}
-          />
+          {isMobile ? (
+            // Monaco is built for desktop and behaves poorly with mobile touch +
+            // virtual keyboards. Below md, use a plain styled textarea wired to the
+            // same change handler so editing/parsing still works on phones.
+            <textarea
+              value={contractSource}
+              onChange={(e) => handleEditorChange(e.target.value)}
+              spellCheck={false}
+              autoCapitalize="off"
+              autoCorrect="off"
+              className="block h-[340px] w-full resize-none bg-[#1e1e1e] p-3 font-mono text-[13px] leading-relaxed text-neutral-200 focus:outline-none"
+              style={{ tabSize: 4 }}
+              aria-label="Contract source code"
+            />
+          ) : (
+            <MonacoEditor
+              height="340px"
+              language="python"
+              theme="vs-dark"
+              value={contractSource}
+              onChange={handleEditorChange}
+              options={{
+                fontSize: 13,
+                fontFamily: 'Fira Code, monospace',
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                lineNumbers: 'on',
+                tabSize: 4,
+                wordWrap: 'on',
+                padding: { top: 12 },
+              }}
+            />
+          )}
           {parseError && (
             <div className="border-t border-red-500/20 bg-red-500/5 px-3 py-2 font-mono text-xs text-red-400">
               ✗ {parseError}

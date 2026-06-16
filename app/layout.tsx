@@ -88,7 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Powered by GenLayer"
-          className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/90 py-1.5 pl-1.5 pr-3 shadow-lg backdrop-blur-sm transition-all hover:border-neutral-600 hover:shadow-emerald-500/10"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/90 py-1.5 pl-1.5 pr-1.5 shadow-lg backdrop-blur-sm transition-all hover:border-neutral-600 hover:shadow-emerald-500/10 sm:pr-3"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -98,7 +98,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             height={22}
             className="rounded-full"
           />
-          <span className="font-mono text-[11px] text-neutral-500">
+          {/* Label hidden on mobile so the badge stays a compact icon and doesn't overlap content */}
+          <span className="hidden font-mono text-[11px] text-neutral-500 sm:inline">
             Powered by <span className="text-neutral-300">GenLayer</span>
           </span>
         </a>
