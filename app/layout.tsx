@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { Toaster } from 'react-hot-toast'
 import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
+import BottomNav from '@/components/layout/BottomNav'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
 import { PostHogPageView } from '@/components/providers/PostHogPageView'
 import { SidebarProvider } from '@/components/providers/SidebarContext'
@@ -79,8 +80,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="min-w-0 flex-1">{children}</main>
+          {/* pb on mobile clears the fixed BottomNav so content isn't hidden behind it */}
+          <main className="min-w-0 flex-1 pb-16 lg:pb-0">{children}</main>
         </div>
+
+        {/* Mobile bottom navigation — hidden on lg where the Sidebar is shown */}
+        <BottomNav />
 
         {/* GenLayer logo — fixed bottom-right */}
         <a
@@ -88,7 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Powered by GenLayer"
-          className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/90 py-1.5 pl-1.5 pr-1.5 shadow-lg backdrop-blur-sm transition-all hover:border-neutral-600 hover:shadow-emerald-500/10 sm:pr-3"
+          className="fixed bottom-[4.5rem] right-4 z-50 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/90 py-1.5 pl-1.5 pr-1.5 shadow-lg backdrop-blur-sm transition-all hover:border-neutral-600 hover:shadow-emerald-500/10 sm:pr-3 lg:bottom-4"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
