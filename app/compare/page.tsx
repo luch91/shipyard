@@ -12,6 +12,7 @@ import { NETWORKS } from '@/lib/genlayer/networks'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import MainnetConfirmDialog from '@/components/deploy/MainnetConfirmDialog'
 import type { NetworkId, DeployLog, DeployResult } from '@/types'
 
 const COMPARABLE_NETWORKS: NetworkId[] = ['testnet-bradbury', 'testnet-asimov', 'studionet', 'localnet']
@@ -43,6 +44,7 @@ function NetworkColumn({
     result: null,
     error: null,
   })
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const deploy = async () => {
     if (!isConnected || !address || !connector) return
@@ -93,6 +95,14 @@ function NetworkColumn({
     warn: 'text-amber-400',
   }
 
+  // Real-funds networks (isMainnet) get a confirmation step; testnets deploy directly.
+  const net = NETWORKS[networkId]
+  const needsConfirm = !!net?.isMainnet
+  const handleDeploy = () => {
+    if (needsConfirm) setConfirmOpen(true)
+    else deploy()
+  }
+
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -102,7 +112,7 @@ function NetworkColumn({
           size="sm"
           loading={state.status === 'deploying'}
           disabled={!contractSource || !isConnected}
-          onClick={deploy}
+          onClick={handleDeploy}
         >
           Deploy
         </Button>
@@ -138,6 +148,16 @@ function NetworkColumn({
           <p className="font-mono text-xs text-red-400">{state.error}</p>
         </div>
       )}
+
+      <MainnetConfirmDialog
+        open={confirmOpen}
+        networkName={net.name}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          deploy()
+        }}
+      />
     </Card>
   )
 }

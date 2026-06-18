@@ -14,6 +14,10 @@ export interface Network {
   isLive: boolean
   description: string
   explorerUrl?: string
+  // When true, deploys to this network require an explicit confirmation step
+  // (real-funds networks, e.g. a future Clarke testnet or mainnet). Defaults to
+  // undefined/false for all current testnets — no behavior change until set.
+  isMainnet?: boolean
 }
 
 // ─── Contract Parsing ────────────────────────────────────────────────────────

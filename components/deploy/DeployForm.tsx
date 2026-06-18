@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { Rocket, Wallet } from 'lucide-react'
 import clsx from 'clsx'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { useDeploy } from '@/hooks/useDeploy'
+import { getNetwork } from '@/lib/genlayer/networks'
+import MainnetConfirmDialog from './MainnetConfirmDialog'
 import type { ContractParam } from '@/types'
 
 // ─── Param Input ──────────────────────────────────────────────────────────────
@@ -74,11 +77,21 @@ function ParamInput({ param, value, onChange }: {
 // ─── Main Form ────────────────────────────────────────────────────────────────
 
 export default function DeployForm() {
-  const { parsedContract, constructorArgs, setConstructorArg } = useDeployStore()
+  const { parsedContract, constructorArgs, setConstructorArg, selectedNetwork } = useDeployStore()
   const { canDeploy, run, deploy } = useDeploy()
   const { isConnected } = useAccount()
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const isDeploying = deploy.status === 'deploying' || deploy.status === 'validating'
+
+  const network = getNetwork(selectedNetwork)
+  const needsConfirm = !!network?.isMainnet
+
+  // Real-funds networks (isMainnet) get a confirmation step; testnets deploy directly.
+  const handleDeploy = () => {
+    if (needsConfirm) setConfirmOpen(true)
+    else run()
+  }
 
   if (!parsedContract) {
     return (
@@ -142,7 +155,7 @@ export default function DeployForm() {
         /* Deploy button */
         <button
           type="button"
-          onClick={run}
+          onClick={handleDeploy}
           disabled={!canDeploy || isDeploying}
           className={clsx(
             'flex items-center justify-center gap-2 rounded-md px-4 py-3 font-mono text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
@@ -164,6 +177,16 @@ export default function DeployForm() {
           )}
         </button>
       )}
+
+      <MainnetConfirmDialog
+        open={confirmOpen}
+        networkName={network.name}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          run()
+        }}
+      />
     </div>
   )
 }
