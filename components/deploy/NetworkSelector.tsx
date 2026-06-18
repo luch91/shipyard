@@ -96,6 +96,25 @@ export default function NetworkSelector() {
             </button>
           )
         })}
+
+        {/* Testnet Clarke — coming soon. Teaser only: not a deployable network
+            until GenLayer publishes its RPC/chainId and genlayer-js exports the
+            chain. Standalone card, intentionally not part of the NETWORKS map. */}
+        <div
+          className="relative flex cursor-default flex-col items-start gap-1 rounded-lg border border-sky-500/20 bg-sky-500/[0.04] px-4 py-3 text-left opacity-70"
+          aria-disabled="true"
+        >
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full bg-sky-400 opacity-40" />
+            <span className="font-mono text-xs font-medium text-sky-400">Testnet Clarke</span>
+          </span>
+          <p className="text-[11px] leading-tight text-neutral-600 line-clamp-2">
+            Next-generation GenLayer testnet
+          </p>
+          <span className="absolute right-2 top-2 rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-sky-400">
+            Soon
+          </span>
+        </div>
       </div>
     </div>
   )
