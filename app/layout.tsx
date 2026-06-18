@@ -5,8 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
 import BottomNav from '@/components/layout/BottomNav'
-import { PostHogProvider } from '@/components/providers/PostHogProvider'
-import { PostHogPageView } from '@/components/providers/PostHogPageView'
+import { AnalyticsPageView } from '@/components/providers/AnalyticsPageView'
 import { SidebarProvider } from '@/components/providers/SidebarContext'
 import { Web3Provider } from '@/components/providers/Web3Provider'
 import '@rainbow-me/rainbowkit/styles.css'
@@ -74,9 +73,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Web3Provider cookie={cookie}>
-        <PostHogProvider>
         <SidebarProvider>
-        <Suspense><PostHogPageView /></Suspense>
+        <Suspense><AnalyticsPageView /></Suspense>
         <Header />
         <div className="flex min-h-screen">
           <Sidebar />
@@ -128,7 +126,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         </SidebarProvider>
-        </PostHogProvider>
         </Web3Provider>
       </body>
     </html>

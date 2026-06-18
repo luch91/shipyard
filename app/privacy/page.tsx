@@ -55,8 +55,10 @@ export default function PrivacyPage() {
         <Section title="What We Process">
           <ul className="flex list-disc flex-col gap-1.5 pl-5">
             <li>
-              <span className="text-neutral-300">Usage analytics</span> — product analytics
-              (for example page views and feature events) to understand and improve the Service.
+              <span className="text-neutral-300">Usage analytics</span> — privacy-respecting
+              first-party analytics (for example page views and feature events). Wallet addresses
+              are hashed before storage and never stored in raw form, and there are no third-party
+              analytics trackers.
             </li>
             <li>
               <span className="text-neutral-300">AI contract generation (optional)</span> — if you use
@@ -78,8 +80,8 @@ export default function PrivacyPage() {
           <p>
             Shipyard relies on third parties that may process limited data as part of providing the
             Service, including your wallet provider, GenLayer networks and RPC endpoints, the AI model
-            provider used for optional generation (OpenRouter), the analytics provider, and the hosting
-            provider (Vercel). Each is governed by its own privacy policy.
+            provider used for optional generation (OpenRouter), and our database and hosting providers
+            (Supabase and Vercel). Each is governed by its own privacy policy.
           </p>
         </Section>
 

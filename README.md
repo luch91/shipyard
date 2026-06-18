@@ -58,7 +58,7 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 | Icons | lucide-react |
 | Fonts | Fira Code + Syne |
 | URL compression | lz-string |
-| Analytics | PostHog |
+| Analytics | First-party (Supabase) |
 
 ---
 
@@ -162,7 +162,7 @@ shipyard/
 │   ├── interact/             # ContractPanel, ReadMethods, WriteMethods
 │   ├── registry/             # RegistryClient
 │   ├── layout/               # Header, Sidebar
-│   ├── providers/            # Client-side provider wrappers (PostHog, Toaster)
+│   ├── providers/            # Client-side provider wrappers (Web3, analytics)
 │   └── ui/                   # Button, Card, Spinner, CopyButton, NetworkBadge
 ├── hooks/
 │   ├── useDeployStore.ts     # Zustand global state
@@ -181,7 +181,7 @@ shipyard/
 │   ├── ai/
 │   │   ├── models.ts         # OpenRouter model definitions
 │   │   └── systemPrompt.ts   # GenLayer contract generation prompt
-│   ├── analytics.ts          # PostHog event wrapper
+│   ├── analytics.ts          # First-party analytics event wrapper
 │   └── diff.ts               # Line-level diff utility
 └── types/index.ts            # Shared TypeScript types
 ```
