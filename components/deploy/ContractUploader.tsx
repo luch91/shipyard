@@ -28,7 +28,8 @@ export default function ContractUploader() {
   const [activeTab, setActiveTab] = useState<TabId>('upload')
 
   // Generate tab state
-  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID)
+  // Only one model is supported, so this is a fixed value (no picker).
+  const selectedModel = DEFAULT_MODEL_ID
   const [description, setDescription] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
@@ -314,20 +315,12 @@ export default function ContractUploader() {
           {/* Generate tab */}
           {activeTab === 'generate' && (
             <div className="flex flex-col gap-4 p-4">
-              {/* Model selector */}
-              <div className="flex flex-col gap-1.5">
-                <label className="font-mono text-xs text-neutral-400">Model</label>
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 font-mono text-sm text-neutral-200 focus:border-emerald-500 focus:outline-none"
-                >
-                  {AI_MODELS.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.label} — {model.badge ?? model.bestFor}
-                    </option>
-                  ))}
-                </select>
+              {/* Model — single supported model, shown as a static label */}
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs text-neutral-400">Model:</span>
+                <span className="font-mono text-xs font-medium text-neutral-200">
+                  {currentModel?.label ?? 'Qwen3 Coder'}
+                </span>
               </div>
 
               {/* Description textarea */}

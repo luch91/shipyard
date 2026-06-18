@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GENLAYER_SYSTEM_PROMPT } from '@/lib/ai/systemPrompt'
 import { AI_MODELS } from '@/lib/ai/models'
+import { validateContract } from '@/lib/genlayer/parser'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,54 @@ function checkRateLimit(ip: string, modelId: string): { allowed: boolean; remain
   return { allowed: true, remaining: FREE_LIMIT - entry.count }
 }
 
+// ── OpenRouter call + output cleaning ─────────────────────────────────────────
+
+async function callOpenRouter(
+  apiKey: string,
+  modelId: string,
+  messages: OpenRouterMessage[]
+): Promise<{ ok: true; content: string } | { ok: false; status: number; message: string }> {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://genshipyard.com',
+      'X-Title': 'Shipyard - GenLayer Deploy Platform',
+    },
+    body: JSON.stringify({
+      model: modelId,
+      max_tokens: 2048,
+      temperature: 0.2,
+      messages,
+    }),
+  })
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    const message =
+      (err as { error?: { message?: string } })?.error?.message ?? `OpenRouter error ${response.status}`
+    return { ok: false, status: response.status, message }
+  }
+
+  const data = await response.json()
+  const content = data?.choices?.[0]?.message?.content ?? ''
+  return { ok: true, content }
+}
+
+function cleanContract(raw: string): string {
+  let c = raw.trim()
+  // Strip markdown code fences if the model added them despite instructions
+  c = c
+    .replace(/^```(?:python|py)?\n?/i, '')
+    .replace(/\n?```$/i, '')
+    .trim()
+  // If the model added prose before the contract, slice from the pinned-hash header
+  const headerIdx = c.search(/#\s*\{\s*"Depends"/)
+  if (headerIdx > 0) c = c.slice(headerIdx).trim()
+  return c
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -81,38 +130,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const messages: OpenRouterMessage[] = [
+    const baseMessages: OpenRouterMessage[] = [
+      { role: 'system', content: GENLAYER_SYSTEM_PROMPT },
       { role: 'user', content: description.trim() },
     ]
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://genshipyard.com',
-        'X-Title': 'Shipyard - GenLayer Deploy Platform',
-      },
-      body: JSON.stringify({
-        model: modelId,
-        max_tokens: 2048,
-        temperature: 0.2,
-        messages: [
-          { role: 'system', content: GENLAYER_SYSTEM_PROMPT },
-          ...messages,
-        ],
-      }),
-    })
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
-      const message = (err as { error?: { message?: string } })?.error?.message ?? `OpenRouter error ${response.status}`
-      return NextResponse.json({ error: message }, { status: response.status })
+    const first = await callOpenRouter(apiKey, modelId, baseMessages)
+    if (!first.ok) {
+      return NextResponse.json({ error: first.message }, { status: first.status })
     }
 
-    const data = await response.json()
-    const contract = data?.choices?.[0]?.message?.content ?? ''
-
+    let contract = cleanContract(first.content)
     if (!contract.trim()) {
       return NextResponse.json(
         { error: 'Model returned an empty response. Try a different description.' },
@@ -120,17 +148,40 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Strip markdown code fences if model added them despite instructions
-    const cleaned = contract
-      .replace(/^```python\n?/i, '')
-      .replace(/^```\n?/i, '')
-      .replace(/\n?```$/i, '')
-      .trim()
+    // Reliability pass: if the generated contract fails validation, ask the model
+    // to fix the specific errors once. Only adopt the retry if it actually validates;
+    // otherwise keep the original. Improves the deployability of AI output.
+    const validation = validateContract(contract)
+    let repaired = false
+    if (!validation.valid) {
+      const repairMessages: OpenRouterMessage[] = [
+        ...baseMessages,
+        { role: 'assistant', content: contract },
+        {
+          role: 'user',
+          content:
+            'The contract has these validation errors that prevent deployment:\n' +
+            validation.errors.map((e) => `- ${e}`).join('\n') +
+            '\n\nReturn a corrected version that fixes these errors. Output ONLY the raw ' +
+            'Python code starting with the header line — no explanation, no markdown.',
+        },
+      ]
+
+      const retry = await callOpenRouter(apiKey, modelId, repairMessages)
+      if (retry.ok) {
+        const fixed = cleanContract(retry.content)
+        if (fixed.trim() && validateContract(fixed).valid) {
+          contract = fixed
+          repaired = true
+        }
+      }
+    }
 
     return NextResponse.json({
-      contract: cleaned,
+      contract,
       model: modelId,
       remaining: remaining === Infinity ? null : remaining,
+      repaired,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'

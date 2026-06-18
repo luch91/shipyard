@@ -7,38 +7,16 @@ export interface AIModel {
   bestFor: string
 }
 
+// Only qwen/qwen3-coder is currently reliable on our OpenRouter account; the
+// previously listed free models (qwen3-coder:free, deepseek-v4:free, gpt-oss-20b)
+// failed to generate and were removed so users are never offered a broken option.
 export const AI_MODELS: AIModel[] = [
   {
     id: 'qwen/qwen3-coder',
     label: 'Qwen3 Coder',
     tier: 'paid',
-    badge: 'Recommended',
     contextWindow: 1_000_000,
     bestFor: 'Best overall code generation quality',
-  },
-  {
-    id: 'qwen/qwen3-coder:free',
-    label: 'Qwen3 Coder',
-    tier: 'free',
-    badge: 'Free',
-    contextWindow: 1_000_000,
-    bestFor: 'Same quality as paid — rate limited',
-  },
-  {
-    id: 'deepseek/deepseek-v4-0520:free',
-    label: 'DeepSeek V4',
-    tier: 'free',
-    badge: 'Free · Best for complex logic',
-    contextWindow: 1_000_000,
-    bestFor: 'Complex contracts with AI reasoning and multi-step logic',
-  },
-  {
-    id: 'openai/gpt-oss-20b',
-    label: 'GPT-OSS 20B',
-    tier: 'free',
-    badge: 'Free',
-    contextWindow: 128_000,
-    bestFor: 'Strong general code generation',
   },
 ]
 
