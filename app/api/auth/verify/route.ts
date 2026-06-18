@@ -7,6 +7,7 @@ import {
   createSessionToken,
   sessionCookieOptions,
 } from '@/lib/auth/session'
+import { getRedis } from '@/lib/redis'
 
 // Verifies a SIWE message + signature and, on success, issues a session cookie.
 // Checks: nonce matches the issued (cookie) nonce, domain matches the request
@@ -65,6 +66,17 @@ export async function POST(req: NextRequest) {
   }
   if (recovered.toLowerCase() !== fields.address.toLowerCase()) {
     return NextResponse.json({ error: 'Signature does not match address.' }, { status: 401 })
+  }
+
+  // Single-use enforcement (replay protection): atomically claim the nonce in
+  // Redis. If it was already claimed, this is a replay — reject. Falls back to
+  // the cookie-only single-use behavior when Redis is not configured.
+  const redis = getRedis()
+  if (redis) {
+    const claimed = await redis.set(`siwe:nonce:${fields.nonce}`, 1, { nx: true, ex: 600 })
+    if (claimed !== 'OK') {
+      return NextResponse.json({ error: 'Nonce already used.' }, { status: 401 })
+    }
   }
 
   const token = await createSessionToken(fields.address, fields.chainId)
