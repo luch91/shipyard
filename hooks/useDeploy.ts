@@ -9,7 +9,7 @@ import type { DeployLog } from '@/types'
 
 // ─── Arg Coercion ─────────────────────────────────────────────────────────────
 
-function coerceArgs(
+export function coerceArgs(
   constructorArgs: Record<string, string>,
   parsedParams: Array<{ name: string; type: string }>
 ): Record<string, unknown> {
