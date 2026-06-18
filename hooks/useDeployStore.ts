@@ -13,7 +13,7 @@ interface DeployStore {
   // Network
   selectedNetwork: NetworkId
 
-  // Wallet (address only — never store private key here)
+  // Wallet (connection state only — signing happens in the user's wallet)
   wallet: WalletState
 
   // Deploy state

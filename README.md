@@ -67,7 +67,7 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 ### Prerequisites
 
 - Node.js 18+
-- A GenLayer testnet wallet (private key)
+- A browser wallet (MetaMask, Rabby, etc.) connected to a GenLayer network
 - Testnet GEN tokens — get them from the [faucet](https://testnet-faucet.genlayer.foundation)
 
 ### Installation
@@ -90,7 +90,7 @@ The app works without any env vars for basic deployment. To enable AI contract g
 OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
-Get a key at [openrouter.ai/keys](https://openrouter.ai/keys). The private key users enter in the UI is never stored — it lives only in local component state for the duration of the signing operation.
+Get a key at [openrouter.ai/keys](https://openrouter.ai/keys). Shipyard never has access to your private keys — all transactions are signed in your connected wallet, and Shipyard only receives the resulting signature.
 
 ### Run
 
@@ -230,9 +230,9 @@ class MyContract:
 
 ## Security
 
-- Private keys are **never stored** — not in Zustand, not in localStorage, not anywhere. They live only in local `useState` for the duration of the signing operation and are cleared on component unmount.
+- Shipyard **never has access to your private keys**. Transactions are signed inside your connected wallet (MetaMask, Rabby, etc.) via WalletConnect/RainbowKit — Shipyard only receives the resulting signature, never the key.
 - Only the wallet **address** is persisted to localStorage for UX continuity.
-- Two server-side API routes exist: `/api/registry` scans GenLayer networks for deployed contracts, and `/api/generate` proxies AI contract generation requests to OpenRouter. Neither handles private keys or stores user data.
+- Two server-side API routes exist: `/api/registry` scans GenLayer networks for deployed contracts, and `/api/generate` proxies AI contract generation requests to OpenRouter. Neither handles keys or stores user data.
 - The OpenRouter API key lives server-side only (`OPENROUTER_API_KEY`) and is never exposed to the client.
 
 ---

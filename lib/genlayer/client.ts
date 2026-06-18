@@ -31,41 +31,6 @@ export async function createReadClient(networkId: NetworkId): Promise<GenLayerCl
 }
 
 /**
- * Signer client — for deploys and write transactions.
- * Private key must be a valid 0x-prefixed 64-char hex string.
- */
-export async function createSignerClient(
-  networkId: NetworkId,
-  privateKey: string
-): Promise<GenLayerClient> {
-  const { createClient, createAccount } = await import('genlayer-js')
-  const chain = await getChain(networkId)
-  const normalized = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`
-  const account = createAccount(normalized as `0x${string}`)
-  return createClient({ chain, account })
-}
-
-/**
- * Ephemeral client — random keypair, useful for testnet exploration.
- */
-export async function createEphemeralClient(networkId: NetworkId): Promise<{
-  client: GenLayerClient
-  privateKey: string
-  address: string
-}> {
-  const { createClient, createAccount, generatePrivateKey } = await import('genlayer-js')
-  const chain = await getChain(networkId)
-  const pk = generatePrivateKey()
-  const account = createAccount(pk)
-  const client = createClient({ chain, account })
-  return {
-    client,
-    privateKey: pk as string,
-    address: account.address as string,
-  }
-}
-
-/**
  * Signer client backed by an EIP-1193 provider (e.g. MetaMask via wagmi connector).
  * Uses eth_sendTransaction so MetaMask shows a confirmation popup.
  * The wallet must already be on the correct chain before calling.
@@ -95,23 +60,6 @@ export async function readContractMethod(
     functionName: methodName,
     args: args as unknown[],
   })
-}
-
-export async function writeContractMethod(
-  networkId: NetworkId,
-  privateKey: string,
-  contractAddress: string,
-  methodName: string,
-  args: unknown[] = []
-): Promise<string> {
-  const client = await createSignerClient(networkId, privateKey)
-  const hash = await client.writeContract({
-    address: contractAddress as `0x${string}`,
-    functionName: methodName,
-    args,
-    value: BigInt(0),
-  })
-  return hash as string
 }
 
 export async function writeContractMethodWithProvider(
