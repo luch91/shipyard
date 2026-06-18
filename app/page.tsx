@@ -6,6 +6,7 @@ import FeaturesSection from '@/components/landing/FeaturesSection'
 import NetworkStatus from '@/components/landing/NetworkStatus'
 import TerminalSpotlight from '@/components/landing/TerminalSpotlight'
 import CTABanner from '@/components/landing/CTABanner'
+import Footer from '@/components/landing/Footer'
 
 export default function HomePage() {
   const networks = getAllNetworks()
@@ -29,6 +30,7 @@ export default function HomePage() {
       <section className="py-16 md:py-24">
         <CTABanner />
       </section>
+      <Footer />
     </div>
   )
 }
