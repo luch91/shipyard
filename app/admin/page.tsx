@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { ShieldAlert, RefreshCw } from 'lucide-react'
-import { useSiweAuth } from '@/hooks/useSiweAuth'
+import { useAuth } from '@/components/providers/SiweAuthProvider'
 import CopyButton from '@/components/ui/CopyButton'
 
 interface Rollup {
@@ -37,7 +37,7 @@ const time = (iso: string) =>
 
 export default function AdminAnalyticsPage() {
   const { isConnected } = useAccount()
-  const { status, authenticated, sessionAddress, signIn, signOut, error } = useSiweAuth()
+  const { status, authenticated, sessionAddress, signIn, signOut, error } = useAuth()
 
   const [gate, setGate]         = useState<Gate>('loading')
   const [rollups, setRollups]   = useState<Rollup[]>([])

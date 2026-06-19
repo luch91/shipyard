@@ -8,7 +8,7 @@ import LZString from 'lz-string'
 import toast from 'react-hot-toast'
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
 import { useDeployStore } from '@/hooks/useDeployStore'
-import { useSiweAuth } from '@/hooks/useSiweAuth'
+import { useAuth } from '@/components/providers/SiweAuthProvider'
 import { track } from '@/lib/analytics'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import CopyButton from '@/components/ui/CopyButton'
@@ -63,7 +63,7 @@ interface ContractPanelProps {
 export default function ContractPanel({ address, networkId }: ContractPanelProps) {
   const router = useRouter()
   const { setContractSource } = useDeployStore()
-  const { authenticated } = useSiweAuth()
+  const { authenticated } = useAuth()
   const [parsed, setParsed] = useState<ParsedContract | null>(null)
   const [activeTab, setActiveTab] = useState<'read' | 'write'>('read')
   const [verify, setVerify] = useState<{ verified: boolean; deployer: string | null } | null>(null)

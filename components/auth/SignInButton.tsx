@@ -2,13 +2,13 @@
 
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { useSiweAuth } from '@/hooks/useSiweAuth'
+import { useAuth } from '@/components/providers/SiweAuthProvider'
 
 // Wallet sign-in affordance. Not yet placed in any page — drop it in wherever the
 // first write/ownership feature needs an authenticated session.
 export default function SignInButton() {
   const { isConnected } = useAccount()
-  const { authenticated, sessionAddress, signIn, signOut, status, error } = useSiweAuth()
+  const { authenticated, sessionAddress, signIn, signOut, status, error } = useAuth()
 
   if (!isConnected) return <ConnectButton chainStatus="none" />
 

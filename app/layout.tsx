@@ -9,6 +9,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import { AnalyticsPageView } from '@/components/providers/AnalyticsPageView'
 import { SidebarProvider } from '@/components/providers/SidebarContext'
 import { Web3Provider } from '@/components/providers/Web3Provider'
+import { SiweAuthProvider } from '@/components/providers/SiweAuthProvider'
 import '@rainbow-me/rainbowkit/styles.css'
 import './globals.css'
 
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Web3Provider cookie={cookie}>
+        <SiweAuthProvider>
         <SidebarProvider>
         <Suspense><AnalyticsPageView /></Suspense>
         <Header />
@@ -128,6 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         </SidebarProvider>
+        </SiweAuthProvider>
         </Web3Provider>
       </body>
     </html>
