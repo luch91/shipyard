@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
 import { GitFork, Share2, ShieldCheck } from 'lucide-react'
@@ -71,22 +71,55 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [manualDeployTx, setManualDeployTx] = useState('')
 
-  const fetchVerifyStatus = async () => {
+  const fetchVerifyStatus = useCallback(async (): Promise<{ source: string | null } | null> => {
     try {
       const res = await fetch(
         `/api/verify?address=${encodeURIComponent(address)}&network=${encodeURIComponent(networkId)}`
       )
       const d = await res.json()
       setVerify({ verified: !!d.verified, deployer: d.deployer ?? null })
+      return { source: typeof d.source === 'string' ? (d.source as string) : null }
+    } catch {
+      return null
+    }
+  }, [address, networkId])
+
+  // Load this contract's source: local cache first (contracts deployed/forked on
+  // this device), then the registry's stored source (contracts deployed elsewhere
+  // or on another device). This keeps the interact view consistent instead of
+  // falling back to the manual paste box based on localStorage alone. Resetting on
+  // address change also stops a previously-opened contract's view from lingering.
+  useEffect(() => {
+    let cancelled = false
+    setParsed(null)
+    setVerify(null)
+
+    let cached: string | null = null
+    try {
+      const stored = localStorage.getItem(`gendeploy:source:${address}`)
+      if (stored && validateContract(stored).valid) cached = stored
     } catch {
       /* non-fatal */
     }
-  }
+    if (cached) setParsed(parseContract(cached))
 
-  useEffect(() => {
-    fetchVerifyStatus()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, networkId])
+    ;(async () => {
+      const d = await fetchVerifyStatus()
+      if (cancelled || !d) return
+      if (!cached && d.source && validateContract(d.source).valid) {
+        setParsed(parseContract(d.source))
+        try {
+          localStorage.setItem(`gendeploy:source:${address}`, d.source)
+        } catch {
+          /* non-fatal */
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [address, fetchVerifyStatus])
 
   const handleVerify = async () => {
     if (!parsed) return
@@ -141,15 +174,6 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
       toast.error('Could not copy link.')
     }
   }
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`gendeploy:source:${address}`)
-      if (stored && validateContract(stored).valid) {
-        setParsed(parseContract(stored))
-      }
-    } catch { /* non-fatal */ }
-  }, [address])
 
   const handleSourceLoad = (src: string) => {
     setParsed(parseContract(src))

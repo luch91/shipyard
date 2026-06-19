@@ -13,7 +13,7 @@ function normalize(s: string): string {
 
 // GET /api/verify?address=&network= -> { verified, deployer }
 export async function GET(req: NextRequest) {
-  if (!isSupabaseConfigured()) return NextResponse.json({ verified: false, deployer: null })
+  if (!isSupabaseConfigured()) return NextResponse.json({ verified: false, deployer: null, source: null })
 
   const url = new URL(req.url)
   const address = url.searchParams.get('address')
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await getSupabaseAdmin()
     .from('contracts')
-    .select('is_verified, deployer_wallet')
+    .select('is_verified, deployer_wallet, source')
     .eq('address', address)
     .eq('network', network)
     .maybeSingle()
@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     verified: !!data?.is_verified,
     deployer: data?.deployer_wallet ?? null,
+    source: data?.source ?? null,
   })
 }
 
