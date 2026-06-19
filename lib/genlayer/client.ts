@@ -80,3 +80,32 @@ export async function writeContractMethodWithProvider(
   })
   return hash as string
 }
+
+// ─── Verification reads ───────────────────────────────────────────────────────
+
+/** The deployed contract's on-chain code (source) — used to verify authenticity. */
+export async function getOnChainCode(networkId: NetworkId, address: string): Promise<string> {
+  const client = await createReadClient(networkId)
+  return (await client.getContractCode(address as `0x${string}`)) as string
+}
+
+/**
+ * Deployer + created-contract address for a deploy transaction — used to confirm
+ * that the signed-in wallet actually deployed this contract (strict attribution).
+ */
+export async function getDeployTx(
+  networkId: NetworkId,
+  hash: string
+): Promise<{ from?: string; contractAddress?: string; isDeploy: boolean }> {
+  const client = await createReadClient(networkId)
+  const tx = await client.getTransaction({ hash: hash as `0x${string}` })
+  // For a deploy tx, getTransaction returns the new contract in recipient/to_address
+  // (txDataDecoded is only populated by waitForTransactionReceipt). A deploy tx
+  // carries contract_code in its data; a plain call does not.
+  const data = tx?.data as { contract_code?: unknown } | undefined
+  return {
+    from: (tx?.from_address ?? tx?.sender) as string | undefined,
+    contractAddress: (tx?.recipient ?? tx?.to_address) as string | undefined,
+    isDeploy: !!data?.contract_code,
+  }
+}

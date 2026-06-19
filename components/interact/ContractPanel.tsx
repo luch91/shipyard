@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
-import { GitFork, Share2 } from 'lucide-react'
+import { GitFork, Share2, ShieldCheck } from 'lucide-react'
 import LZString from 'lz-string'
 import toast from 'react-hot-toast'
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
 import { useDeployStore } from '@/hooks/useDeployStore'
+import { useSiweAuth } from '@/hooks/useSiweAuth'
 import { track } from '@/lib/analytics'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import CopyButton from '@/components/ui/CopyButton'
+import SignInButton from '@/components/auth/SignInButton'
 import ReadMethods from './ReadMethods'
 import WriteMethods from './WriteMethods'
 import type { ParsedContract, NetworkId } from '@/types'
@@ -61,8 +63,60 @@ interface ContractPanelProps {
 export default function ContractPanel({ address, networkId }: ContractPanelProps) {
   const router = useRouter()
   const { setContractSource } = useDeployStore()
+  const { authenticated } = useSiweAuth()
   const [parsed, setParsed] = useState<ParsedContract | null>(null)
   const [activeTab, setActiveTab] = useState<'read' | 'write'>('read')
+  const [verify, setVerify] = useState<{ verified: boolean; deployer: string | null } | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
+
+  const fetchVerifyStatus = async () => {
+    try {
+      const res = await fetch(
+        `/api/verify?address=${encodeURIComponent(address)}&network=${encodeURIComponent(networkId)}`
+      )
+      const d = await res.json()
+      setVerify({ verified: !!d.verified, deployer: d.deployer ?? null })
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  useEffect(() => {
+    fetchVerifyStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, networkId])
+
+  const handleVerify = async () => {
+    if (!parsed) return
+    setVerifying(true)
+    setVerifyError(null)
+    // The deploy tx (from local history) lets the server confirm we deployed it.
+    let deployTx: string | undefined
+    try {
+      const raw = localStorage.getItem('gendeploy:deployments')
+      const list: Array<{ address?: string; txHash?: string }> = raw ? JSON.parse(raw) : []
+      deployTx = list.find((r) => r.address?.toLowerCase() === address.toLowerCase())?.txHash
+    } catch {
+      /* non-fatal */
+    }
+    try {
+      const res = await fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, network: networkId, source: parsed.raw, deployTx }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error ?? 'Verification failed.')
+      await fetchVerifyStatus()
+      track('contract_verified', { address, network: networkId, attributed: !!d.attributed })
+      toast.success(d.attributed ? 'Verified & attributed to your wallet!' : 'Verified — source matches on-chain!')
+    } catch (e) {
+      setVerifyError(e instanceof Error ? e.message : 'Verification failed.')
+    } finally {
+      setVerifying(false)
+    }
+  }
 
   const handleFork = () => {
     if (!parsed) return
@@ -153,6 +207,43 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
                 change source
               </button>
             </div>
+          </div>
+
+          {/* Verification */}
+          <div className="mb-4">
+            {verify?.verified ? (
+              <div className="inline-flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/[0.06] px-3 py-1.5">
+                <ShieldCheck size={13} className="text-emerald-400" />
+                <span className="font-mono text-xs font-semibold text-emerald-400">Verified</span>
+                {verify.deployer ? (
+                  <span className="font-mono text-[11px] text-neutral-400">
+                    · deployed by {verify.deployer.slice(0, 6)}…{verify.deployer.slice(-4)}
+                  </span>
+                ) : (
+                  <span className="font-mono text-[11px] text-neutral-500">· source matches on-chain</span>
+                )}
+              </div>
+            ) : authenticated ? (
+              <div className="flex flex-col items-start gap-1">
+                <button
+                  type="button"
+                  onClick={handleVerify}
+                  disabled={verifying}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 px-3 py-1.5 font-mono text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/[0.08] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none"
+                >
+                  <ShieldCheck size={13} />
+                  {verifying ? 'Verifying…' : 'Verify & publish source'}
+                </button>
+                {verifyError && <span className="font-mono text-[11px] text-red-400">{verifyError}</span>}
+              </div>
+            ) : (
+              <div className="flex flex-col items-start gap-2 rounded-md border border-neutral-800 bg-neutral-900/60 p-3">
+                <span className="font-mono text-[11px] text-neutral-500">
+                  Sign in with your wallet to verify &amp; publish this contract&apos;s source.
+                </span>
+                <SignInButton />
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
