@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
 import { getRedis } from '@/lib/redis'
-import { getOnChainCode } from '@/lib/genlayer/client'
+import { getDeployTx } from '@/lib/genlayer/client'
 import { NETWORKS } from '@/lib/genlayer/networks'
 import type { NetworkId } from '@/types'
 
@@ -22,24 +22,45 @@ export async function POST(req: NextRequest) {
     }
     const address = typeof body.address === 'string' ? body.address : ''
     const network = typeof body.network === 'string' ? body.network : ''
-    const deployTx = typeof body.deployTx === 'string' ? body.deployTx : null
+    const deployTx = typeof body.deployTx === 'string' && body.deployTx ? body.deployTx : null
 
     if (!address || !(network in NETWORKS)) {
       return NextResponse.json({ error: 'address and a valid network are required.' }, { status: 400 })
     }
 
-    // Anti-spam: only list contracts that genuinely exist on-chain.
+    // Anti-spam: a record must carry a deploy transaction. We validate it where we
+    // can, but a transient RPC failure (common on Bradbury, which has slow LLM
+    // finality and a rate-limited public RPC) must NEVER drop a genuine deploy. So
+    // we only reject on a *conclusive* contradiction — i.e. the tx lookup succeeds
+    // and shows it did not deploy this address. Inconclusive/timed-out reads record.
+    if (!deployTx) {
+      return NextResponse.json({ error: 'A deploy transaction hash is required.' }, { status: 400 })
+    }
+    // The deploy tx also carries the contract source, so we store it here to make
+    // unverified registry entries show their methods (verification later upgrades
+    // the row). Source read from the tx is authentic (it's what was deployed).
+    let source: string | null = null
     try {
-      const code = await getOnChainCode(network as NetworkId, address)
-      if (!code) return NextResponse.json({ error: 'No contract at that address.' }, { status: 400 })
+      const tx = await getDeployTx(network as NetworkId, deployTx)
+      // Only reject on a *positive* contradiction: the tx resolves to a created
+      // contract that is a different address. Anything inconclusive (no address
+      // resolved yet, decoded fields still settling) records — never drop a real
+      // deploy on timing.
+      if (tx.contractAddress && tx.contractAddress.toLowerCase() !== address.toLowerCase()) {
+        return NextResponse.json(
+          { error: 'That transaction did not deploy this address.' },
+          { status: 400 },
+        )
+      }
+      if (typeof tx.code === 'string' && tx.code) source = tx.code
     } catch {
-      return NextResponse.json({ error: 'Could not confirm the contract on-chain.' }, { status: 502 })
+      // Transient lookup failure — trust the supplied tx and record anyway.
     }
 
     await getSupabaseAdmin()
       .from('contracts')
       .upsert(
-        { address, network, deploy_tx: deployTx, deployed_at: new Date().toISOString() },
+        { address, network, source, deploy_tx: deployTx, deployed_at: new Date().toISOString() },
         { onConflict: 'address,network', ignoreDuplicates: true },
       )
 

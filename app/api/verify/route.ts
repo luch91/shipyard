@@ -65,17 +65,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'address, network, and source are required.' }, { status: 400 })
   }
 
-  // ── Authenticity: source must match on-chain code ──
-  let onChain: string
+  // ── Authenticity: source must match the authentic on-chain source ──
+  // Studio networks (studionet/localnet) expose getContractCode. Bradbury/Asimov
+  // do not, so there we read the source embedded in the deploy transaction.
+  let onChainSource: string | null = null
+  let tx: Awaited<ReturnType<typeof getDeployTx>> | null = null
+
   try {
-    onChain = await getOnChainCode(network as NetworkId, address)
+    const code = await getOnChainCode(network as NetworkId, address)
+    if (code) onChainSource = code
   } catch {
+    // getContractCode is unavailable on this network — fall back to the deploy tx.
+  }
+
+  if (!onChainSource && deployTx) {
+    try {
+      tx = await getDeployTx(network as NetworkId, deployTx)
+      const deployedThis = tx.contractAddress?.toLowerCase() === address.toLowerCase()
+      if (tx.isDeploy && deployedThis && tx.code) onChainSource = tx.code
+    } catch {
+      // deploy tx lookup failed — handled by the null check below.
+    }
+  }
+
+  if (!onChainSource) {
     return NextResponse.json(
-      { error: 'Could not read the contract from the network. Check the address and network.' },
+      {
+        error:
+          'Could not read the contract source from the network. On Bradbury/Asimov, include the deploy transaction hash.',
+      },
       { status: 502 }
     )
   }
-  if (!onChain || normalize(onChain) !== normalize(source)) {
+  if (normalize(onChainSource) !== normalize(source)) {
     return NextResponse.json(
       { error: 'Source does not match the on-chain contract.' },
       { status: 400 }
@@ -86,7 +108,7 @@ export async function POST(req: NextRequest) {
   let attributedTo: string | null = null
   if (deployTx) {
     try {
-      const tx = await getDeployTx(network as NetworkId, deployTx)
+      if (!tx) tx = await getDeployTx(network as NetworkId, deployTx)
       const deployedThis = tx.contractAddress?.toLowerCase() === address.toLowerCase()
       const sentBySigner = tx.from?.toLowerCase() === session.address
       if (tx.isDeploy && deployedThis && sentBySigner) attributedTo = session.address

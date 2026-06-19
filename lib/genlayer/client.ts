@@ -96,16 +96,23 @@ export async function getOnChainCode(networkId: NetworkId, address: string): Pro
 export async function getDeployTx(
   networkId: NetworkId,
   hash: string
-): Promise<{ from?: string; contractAddress?: string; isDeploy: boolean }> {
+): Promise<{ from?: string; contractAddress?: string; isDeploy: boolean; code?: string }> {
   const client = await createReadClient(networkId)
   const tx = await client.getTransaction({ hash: hash as `0x${string}` })
-  // For a deploy tx, getTransaction returns the new contract in recipient/to_address
-  // (txDataDecoded is only populated by waitForTransactionReceipt). A deploy tx
-  // carries contract_code in its data; a plain call does not.
+  // The tx shape differs across networks:
+  //  - Studio (studionet/localnet): info lives under tx.data (data.contract_code).
+  //  - Testnets (bradbury/asimov): decoded fields live under tx.txDataDecoded
+  //    ({ code, type: 'deploy', contractAddress }), and the deployer is tx.sender.
+  // Read both so attribution/verification work everywhere.
   const data = tx?.data as { contract_code?: unknown } | undefined
+  const decoded = tx?.txDataDecoded as
+    | { type?: string; contractAddress?: string; code?: string }
+    | undefined
+  const codeFromData = typeof data?.contract_code === 'string' ? data.contract_code : undefined
   return {
     from: (tx?.from_address ?? tx?.sender) as string | undefined,
-    contractAddress: (tx?.recipient ?? tx?.to_address) as string | undefined,
-    isDeploy: !!data?.contract_code,
+    contractAddress: (tx?.recipient ?? tx?.to_address ?? decoded?.contractAddress) as string | undefined,
+    isDeploy: !!data?.contract_code || decoded?.type === 'deploy',
+    code: decoded?.code ?? codeFromData,
   }
 }
