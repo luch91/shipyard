@@ -69,6 +69,7 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
   const [verify, setVerify] = useState<{ verified: boolean; deployer: string | null } | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState<string | null>(null)
+  const [manualDeployTx, setManualDeployTx] = useState('')
 
   const fetchVerifyStatus = async () => {
     try {
@@ -100,6 +101,9 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
     } catch {
       /* non-fatal */
     }
+    // Fall back to a manually-entered deploy tx (for contracts deployed elsewhere,
+    // e.g. via the CLI) so their deployer can still claim attribution.
+    if (!deployTx && manualDeployTx.trim()) deployTx = manualDeployTx.trim()
     try {
       const res = await fetch('/api/verify', {
         method: 'POST',
@@ -224,7 +228,7 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
                 )}
               </div>
             ) : authenticated ? (
-              <div className="flex flex-col items-start gap-1">
+              <div className="flex w-full max-w-md flex-col items-start gap-2">
                 <button
                   type="button"
                   onClick={handleVerify}
@@ -234,6 +238,14 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
                   <ShieldCheck size={13} />
                   {verifying ? 'Verifying…' : 'Verify & publish source'}
                 </button>
+                <input
+                  type="text"
+                  value={manualDeployTx}
+                  onChange={(e) => setManualDeployTx(e.target.value)}
+                  placeholder="Deploy tx hash (optional — lets the deployer claim attribution)"
+                  className="w-full rounded-md border border-neutral-800 bg-neutral-900 px-2.5 py-1.5 font-mono text-[11px] text-neutral-300 placeholder-neutral-600 focus:border-emerald-500/50 focus:outline-none"
+                  aria-label="Deploy transaction hash (optional)"
+                />
                 {verifyError && <span className="font-mono text-[11px] text-red-400">{verifyError}</span>}
               </div>
             ) : (

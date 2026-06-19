@@ -136,6 +136,7 @@ export function useDeploy() {
           contractName: enriched.contractName,
           network: enriched.network,
           deployedAt: enriched.deployedAt,
+          txHash: enriched.transactionHash,
         })
         localStorage.setItem(historyKey, JSON.stringify(existing.slice(0, 50)))
 
@@ -144,6 +145,19 @@ export function useDeploy() {
         }
       } catch {
         // localStorage may not be available — non-fatal
+      }
+
+      // Add the deploy to the public registry (fire-and-forget; never blocks deploy).
+      if (enriched.contractAddress) {
+        fetch('/api/registry/record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: enriched.contractAddress,
+            network: enriched.network,
+            deployTx: enriched.transactionHash,
+          }),
+        }).catch(() => {})
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred.'
