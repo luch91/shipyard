@@ -100,20 +100,23 @@ export async function POST(req: NextRequest) {
   // Was it already verified+attributed to this wallet? (avoid double-counting reputation)
   const { data: existing } = await sb
     .from('contracts')
-    .select('is_verified, deployer_wallet')
+    .select('is_verified, deployer_wallet, deploy_tx')
     .eq('address', address)
     .eq('network', network)
     .maybeSingle()
   const alreadyAttributed = !!existing?.is_verified && existing?.deployer_wallet === attributedTo
 
+  // Never downgrade attribution: a verify may add or upgrade the deployer, but an
+  // authenticity-only re-verify (attributedTo === null) must preserve whatever's
+  // already attributed instead of nulling it.
   const { error: upsertErr } = await sb.from('contracts').upsert(
     {
       address,
       network,
       source,
       is_verified: true,
-      deployer_wallet: attributedTo,
-      deploy_tx: deployTx ?? null,
+      deployer_wallet: attributedTo ?? existing?.deployer_wallet ?? null,
+      deploy_tx: attributedTo ? deployTx : (existing?.deploy_tx ?? null),
     },
     { onConflict: 'address,network' }
   )
