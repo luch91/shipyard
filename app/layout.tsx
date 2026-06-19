@@ -99,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             alt="GenLayer"
             width={22}
             height={22}
-            className="rounded-full"
+            className="rounded-full invert"
           />
           {/* Label hidden on mobile so the badge stays a compact icon and doesn't overlap content */}
           <span className="hidden font-mono text-[11px] text-neutral-500 sm:inline">

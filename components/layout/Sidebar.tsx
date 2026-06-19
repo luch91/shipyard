@@ -4,16 +4,18 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Anchor, BookOpen, ChevronLeft, ChevronRight,
+  BookOpen, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import clsx from 'clsx'
+import Logo from './Logo'
 import { NAV_ITEMS } from './navItems'
+import { useNavNew } from '@/hooks/useNavNew'
 import type { DeploymentRecord } from '@/types'
 
 // ── Nav item ──────────────────────────────────────────────────────────────────
 
 function NavItem({
-  href, label, Icon, active, soon, badge, collapsed,
+  href, label, Icon, active, soon, badge, collapsed, showNew, onSelect,
 }: {
   href:      string
   label:     string
@@ -22,12 +24,15 @@ function NavItem({
   soon?:     boolean
   badge?:    number
   collapsed: boolean
+  showNew?:  boolean
+  onSelect?: () => void
 }) {
   if (collapsed) {
     return (
       <Link
         href={href}
         title={label}
+        onClick={onSelect}
         className={clsx(
           'relative flex h-8 w-8 items-center justify-center rounded-lg transition-all',
           active
@@ -41,6 +46,9 @@ function NavItem({
             {badge > 9 ? '9+' : badge}
           </span>
         )}
+        {showNew && (
+          <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-neutral-950" />
+        )}
       </Link>
     )
   }
@@ -48,6 +56,7 @@ function NavItem({
   return (
     <Link
       href={href}
+      onClick={onSelect}
       className={clsx(
         'flex items-center gap-2.5 rounded-lg px-2.5 py-[7px]',
         'text-xs font-medium transition-all duration-150',
@@ -63,7 +72,12 @@ function NavItem({
           Soon
         </span>
       )}
-      {badge !== undefined && badge > 0 && !soon && (
+      {showNew && !soon && (
+        <span className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          New
+        </span>
+      )}
+      {badge !== undefined && badge > 0 && !soon && !showNew && (
         <span className="shrink-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500/15 px-1 font-mono text-[9px] text-emerald-400">
           {badge > 9 ? '9+' : badge}
         </span>
@@ -78,6 +92,7 @@ export default function Sidebar() {
   const pathname          = usePathname()
   const [open, setOpen]   = useState(true)
   const [count, setCount] = useState(0)
+  const { showNew, markSeen } = useNavNew()
 
   // Read deployment count from localStorage only — no database
   useEffect(() => {
@@ -131,16 +146,9 @@ export default function Sidebar() {
       {open && (
         <div className="flex flex-1 flex-col overflow-hidden">
 
-          {/* Logo */}
+          {/* Logo — wordmark only (no mark), matching the header font */}
           <div className="px-3 py-4 border-b border-white/[0.05]">
-            <Link
-              href="/"
-              className="flex items-center gap-2 font-mono text-sm font-semibold
-                         text-white hover:text-emerald-400 transition-colors"
-            >
-              <Anchor size={16} className="text-emerald-400 shrink-0" />
-              <span>Ship<span className="text-emerald-400">yard</span></span>
-            </Link>
+            <Logo showMark={false} className="text-lg" />
           </div>
 
           {/* Nav links */}
@@ -149,7 +157,7 @@ export default function Sidebar() {
                           uppercase text-neutral-700">
               Navigate
             </p>
-            {NAV_ITEMS.map(({ href, label, Icon, soon }) => (
+            {NAV_ITEMS.map(({ href, label, Icon, soon, isNew }) => (
               <NavItem
                 key={href}
                 href={href}
@@ -159,6 +167,8 @@ export default function Sidebar() {
                 soon={soon}
                 badge={href === '/history' ? count : undefined}
                 collapsed={false}
+                showNew={showNew(href, isNew)}
+                onSelect={() => markSeen(href)}
               />
             ))}
           </nav>
@@ -188,10 +198,7 @@ export default function Sidebar() {
       {/* ── COLLAPSED ──────────────────────────────────────────────────────── */}
       {!open && (
         <div className="flex flex-1 flex-col items-center gap-1.5 py-4">
-          <Link href="/" className="mb-2">
-            <Anchor size={16} className="text-emerald-400" />
-          </Link>
-          {NAV_ITEMS.map(({ href, label, Icon, soon }) => (
+          {NAV_ITEMS.map(({ href, label, Icon, soon, isNew }) => (
             <NavItem
               key={href}
               href={href}
@@ -201,6 +208,8 @@ export default function Sidebar() {
               soon={soon}
               badge={href === '/history' ? count : undefined}
               collapsed={true}
+              showNew={showNew(href, isNew)}
+              onSelect={() => markSeen(href)}
             />
           ))}
         </div>
