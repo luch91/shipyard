@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getRedis } from '@/lib/redis'
+import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
+import { parseContract } from '@/lib/genlayer/parser'
 
-const RPC_URLS: Record<string, string> = {
-  'testnet-bradbury': 'https://rpc-bradbury.genlayer.com',
-  'testnet-asimov':   'https://rpc-asimov.genlayer.com',
-  studionet:          'https://studio.genlayer.com/api',
-}
+// DB-backed registry. Contracts enter the `contracts` table when they are
+// deployed or verified through Shipyard (a live full-chain crawler would be a
+// later, separate addition). Reads use the service role (bypasses RLS) and are
+// cached in Redis with a 5-minute TTL (PRD).
 
-const CONSENSUS_CONTRACTS: Record<string, string> = {
-  'testnet-bradbury': '0x0112Bf6e83497965A5fdD6Dad1E447a6E004271D',
-  'testnet-asimov':   '0x6CAFF6769d70824745AD895663409DC70aB5B28E',
-  studionet:          '0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575',
-}
+const CACHE_TTL_SECONDS = 300
 
-// keccak256('NewTransaction(bytes32,address,address)')
-const NEW_TX_TOPIC =
-  '0xdab9102861c7483a187584d6371d88316f005af507982ccf95c110879f3ed5a5'
-
-const CHUNK_SIZE    = 10_000
-const MAX_SCAN      = 500_000
-const MAX_CANDIDATES = 100
+const KNOWN_NETWORKS = ['testnet-bradbury', 'testnet-asimov', 'studionet', 'localnet']
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -29,115 +21,85 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS })
 }
 
-async function rpc(rpcUrl: string, method: string, params: unknown[]): Promise<unknown> {
-  const res = await fetch(rpcUrl, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-    signal:  AbortSignal.timeout(15_000),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json()
-  if (json.error) throw new Error(json.error.message ?? 'RPC error')
-  return json.result
-}
-
-function extractAddress(paddedTopic: string): string {
-  return '0x' + paddedTopic.slice(26).toLowerCase()
-}
-
-async function getContractMethods(rpcUrl: string, addr: string): Promise<string[] | null> {
-  try {
-    const schema = (await rpc(rpcUrl, 'gen_getContractSchema', [{ address: addr }])) as {
-      methods?: Record<string, unknown>
-    }
-    return schema?.methods ? Object.keys(schema.methods) : null
-  } catch {
-    return null
-  }
-}
-
 export type ContractEntry = {
-  address:     string
-  methods:     string[]
-  blockNumber: number
-  network:     string
+  address:    string
+  network:    string
+  verified:   boolean
+  deployer:   string | null
+  deployedAt: string | null
+  methods:    string[]
 }
 
 export async function GET(req: NextRequest) {
-  const network       = req.nextUrl.searchParams.get('network') ?? 'testnet-bradbury'
-  const rpcUrl        = RPC_URLS[network]
-  const consensusAddr = CONSENSUS_CONTRACTS[network]
+  const network = req.nextUrl.searchParams.get('network') ?? 'testnet-bradbury'
 
-  if (!rpcUrl || !consensusAddr) {
-    return NextResponse.json(
-      { error: `Unknown network: ${network}` },
-      { status: 400, headers: CORS },
-    )
+  if (!KNOWN_NETWORKS.includes(network)) {
+    return NextResponse.json({ error: `Unknown network: ${network}` }, { status: 400, headers: CORS })
+  }
+
+  // Without a database there is no registry to read — return empty, not an error.
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json([], { headers: { ...CORS, 'X-Cache': 'DISABLED' } })
+  }
+
+  const redis = getRedis()
+  const cacheKey = `registry:${network}`
+  if (redis) {
+    try {
+      const cached = await redis.get<ContractEntry[]>(cacheKey)
+      if (cached) {
+        return NextResponse.json(cached, {
+          headers: { ...CORS, 'X-Cache': 'HIT', 'Cache-Control': 's-maxage=60, stale-while-revalidate=30' },
+        })
+      }
+    } catch {
+      // cache read failure — fall through to a DB read
+    }
   }
 
   try {
-    const latestHex = (await rpc(rpcUrl, 'eth_blockNumber', [])) as string
-    const latest    = parseInt(latestHex, 16)
+    const { data, error } = await getSupabaseAdmin()
+      .from('contracts')
+      .select('address, network, is_verified, deployer_wallet, deployed_at, created_at, source')
+      .eq('network', network)
+      .order('is_verified', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(200)
 
-    const scanFrom = Math.max(0, latest - MAX_SCAN)
-    const chunks: [number, number][] = []
-    for (let start = scanFrom; start <= latest; start += CHUNK_SIZE) {
-      chunks.push([start, Math.min(start + CHUNK_SIZE - 1, latest)])
-    }
+    if (error) throw new Error(error.message)
 
-    const chunkResults = await Promise.allSettled(
-      chunks.map(([from, to]) =>
-        rpc(rpcUrl, 'eth_getLogs', [
-          {
-            address:   consensusAddr,
-            topics:    [NEW_TX_TOPIC],
-            fromBlock: '0x' + from.toString(16),
-            toBlock:   '0x' + to.toString(16),
-          },
-        ]),
-      ),
-    )
+    const contracts: ContractEntry[] = (data ?? []).map((r) => {
+      let methods: string[] = []
+      if (typeof r.source === 'string' && r.source) {
+        try {
+          methods = parseContract(r.source).methods.map((m) => m.name)
+        } catch {
+          // unparseable source — list the contract without method chips
+        }
+      }
+      return {
+        address:    String(r.address),
+        network:    String(r.network),
+        verified:   !!r.is_verified,
+        deployer:   r.deployer_wallet ?? null,
+        deployedAt: (r.deployed_at ?? r.created_at) ?? null,
+        methods,
+      }
+    })
 
-    const seen = new Map<string, number>()
-    for (const result of chunkResults) {
-      if (result.status !== 'fulfilled') continue
-      const logs = result.value as Array<{ topics: string[]; blockNumber: string }>
-      for (const log of logs) {
-        if (log.topics.length < 3) continue
-        const addr  = extractAddress(log.topics[2])
-        const block = parseInt(log.blockNumber, 16)
-        const prev  = seen.get(addr)
-        if (prev === undefined || block < prev) seen.set(addr, block)
+    if (redis) {
+      try {
+        await redis.set(cacheKey, contracts, { ex: CACHE_TTL_SECONDS })
+      } catch {
+        // cache write failure is non-fatal
       }
     }
 
-    const candidates = Array.from(seen.entries()).slice(0, MAX_CANDIDATES)
-
-    const icResults = await Promise.allSettled(
-      candidates.map(async ([addr, blockNumber]) => {
-        const methods = await getContractMethods(rpcUrl, addr)
-        if (methods === null) return null
-        return { address: addr, methods, blockNumber, network }
-      }),
-    )
-
-    const contracts: ContractEntry[] = icResults
-      .filter(
-        (r): r is PromiseFulfilledResult<ContractEntry> =>
-          r.status === 'fulfilled' && r.value !== null,
-      )
-      .map((r) => r.value)
-      .sort((a, b) => b.blockNumber - a.blockNumber)
-
     return NextResponse.json(contracts, {
-      headers: {
-        ...CORS,
-        'Cache-Control': 's-maxage=60, stale-while-revalidate=30',
-      },
+      headers: { ...CORS, 'X-Cache': 'MISS', 'Cache-Control': 's-maxage=60, stale-while-revalidate=30' },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 502, headers: CORS })
+    return NextResponse.json({ error: message }, { status: 500, headers: CORS })
   }
 }

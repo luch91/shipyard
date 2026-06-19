@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { RefreshCw, Copy, Check, ExternalLink } from 'lucide-react'
+import { RefreshCw, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react'
 import clsx from 'clsx'
 import NetworkBadge from '@/components/ui/NetworkBadge'
 import type { NetworkId } from '@/types'
@@ -107,7 +107,9 @@ export default function RegistryClient() {
 
       {/* Empty */}
       {!loading && !error && contracts.length === 0 && (
-        <p className="text-sm text-neutral-600">No Intelligent Contracts found on this network.</p>
+        <p className="text-sm text-neutral-600">
+          No contracts in the registry yet for this network. Deploy or verify a contract to add it.
+        </p>
       )}
 
       {/* List */}
@@ -119,22 +121,33 @@ export default function RegistryClient() {
               className="flex flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0 flex-1">
-                {/* Address + copy */}
-                <button
-                  type="button"
-                  onClick={() => copy(c.address)}
-                  className="group flex items-center gap-1.5 focus:outline-none"
-                  aria-label="Copy address"
-                >
-                  <span className="truncate font-mono text-sm text-white group-hover:text-emerald-400">
-                    {c.address}
-                  </span>
-                  {copied === c.address ? (
-                    <Check size={12} className="shrink-0 text-emerald-400" />
-                  ) : (
-                    <Copy size={12} className="shrink-0 text-neutral-600 group-hover:text-neutral-400" />
+                {/* Address + copy + verified badge */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => copy(c.address)}
+                    className="group flex min-w-0 items-center gap-1.5 focus:outline-none"
+                    aria-label="Copy address"
+                  >
+                    <span className="truncate font-mono text-sm text-white group-hover:text-emerald-400">
+                      {c.address}
+                    </span>
+                    {copied === c.address ? (
+                      <Check size={12} className="shrink-0 text-emerald-400" />
+                    ) : (
+                      <Copy size={12} className="shrink-0 text-neutral-600 group-hover:text-neutral-400" />
+                    )}
+                  </button>
+                  {c.verified && (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/[0.08] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-400"
+                      title={c.deployer ? `Deployed by ${c.deployer}` : 'Source matches on-chain'}
+                    >
+                      <ShieldCheck size={10} />
+                      Verified
+                    </span>
                   )}
-                </button>
+                </div>
 
                 {/* Method chips */}
                 {c.methods.length > 0 && (
@@ -155,9 +168,11 @@ export default function RegistryClient() {
                   </div>
                 )}
 
-                <p className="mt-1.5 font-mono text-[11px] text-neutral-700">
-                  block {c.blockNumber.toLocaleString()}
-                </p>
+                {c.deployedAt && (
+                  <p className="mt-1.5 font-mono text-[11px] text-neutral-700">
+                    {new Date(c.deployedAt).toLocaleDateString()}
+                  </p>
+                )}
               </div>
 
               {/* Right: badge + interact */}
