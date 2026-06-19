@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { headers } from 'next/headers'
 import { Toaster } from 'react-hot-toast'
 import Header from '@/components/layout/Header'
+import MobileTopBar from '@/components/layout/MobileTopBar'
 import Sidebar from '@/components/layout/Sidebar'
 import BottomNav from '@/components/layout/BottomNav'
 import { AnalyticsPageView } from '@/components/providers/AnalyticsPageView'
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SidebarProvider>
         <Suspense><AnalyticsPageView /></Suspense>
         <Header />
+        <MobileTopBar />
         <div className="flex min-h-screen">
           <Sidebar />
           {/* pb on mobile clears the fixed BottomNav so content isn't hidden behind it */}
