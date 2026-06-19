@@ -29,7 +29,9 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 - **4 networks** — Testnet Bradbury, Testnet Asimov, Studionet, Localnet
 - **Network health indicators** — real-time RPC status per network (online / slow / offline)
 - **Live deploy logs** — streaming terminal output during deployment
-- **Contract registry** — browse Intelligent Contracts deployed on live GenLayer networks
+- **Public contract registry** — a DB-backed registry of contracts deployed through Shipyard (and external contracts that claim attribution), with verification badges and method previews
+- **Contract verification** — prove a contract's source by signing in with your wallet (SIWE); Shipyard matches your published source against the on-chain code and attributes the deploy to your address
+- **Wallet sign-in (SIWE)** — passwordless authentication via "Sign-In with Ethereum"; a session is held in an httpOnly cookie, no passwords or keys involved
 - **Interact page** — call read and write methods on any deployed contract
 - **One-click fork** — load any deployed contract's source into the editor from the interact page, ready to modify and redeploy
 - **Shareable deploy links** — network-aware interact URLs (`/interact/0xabc?network=bradbury`) that pre-select the correct network when shared
@@ -39,6 +41,8 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 - **Network comparison** — deploy the same contract to two networks simultaneously
 - **Contract diff view** — see what changed when re-deploying an existing contract
 - **Faucet widget** — one-click testnet token request when your wallet balance is 0
+- **Responsive navigation** — collapsible desktop sidebar plus a mobile bottom-nav and a top back-bar for deep pages
+- **First-party analytics** — privacy-preserving event tracking; wallet addresses are SHA-256 hashed before storage (raw wallets are never stored), with daily rollups via Vercel Cron
 - **Dark theme** — Fira Code + Syne fonts, emerald accent, no light mode
 
 ---
@@ -53,6 +57,11 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 | State | Zustand |
 | Contract editor | Monaco Editor |
 | GenLayer SDK | genlayer-js |
+| Wallet | wagmi v2 + RainbowKit |
+| Database | Supabase (PostgreSQL, RLS) |
+| Auth | SIWE (viem + jose, httpOnly JWT cookie) |
+| Cache / nonce store | Upstash Redis |
+| Scheduled jobs | Vercel Cron |
 | Animations | Framer Motion |
 | Toasts | react-hot-toast |
 | Icons | lucide-react |
@@ -84,13 +93,22 @@ npm install
 cp .env.local.example .env.local
 ```
 
-The app works without any env vars for basic deployment. To enable AI contract generation, add your OpenRouter API key:
+The app works without any env vars for basic deployment — every backend feature degrades gracefully when its keys are absent. Configure only what you need:
 
-```bash
-OPENROUTER_API_KEY=sk-or-v1-...
-```
+| Variable(s) | Enables | Required? |
+|---|---|---|
+| `OPENROUTER_API_KEY` | AI contract generation ([get a key](https://openrouter.ai/keys)) | Optional |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect/RainbowKit wallet connection ([get one](https://cloud.walletconnect.com)) | Optional |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Registry, contract verification, analytics storage | Optional |
+| `SESSION_SECRET` | SIWE wallet sign-in (signs the session JWT) | With Supabase |
+| `ANALYTICS_SALT` | Hashing salt for first-party analytics | With Supabase |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Caching, rate-limiting, SIWE nonce store | Optional |
+| `CRON_SECRET` | Protects the Vercel Cron rollup route | With Cron |
+| `SUPABASE_DB_URL` | Running migrations only (`supabase db push`) | Migrations |
 
-Get a key at [openrouter.ai/keys](https://openrouter.ai/keys). Shipyard never has access to your private keys — all transactions are signed in your connected wallet, and Shipyard only receives the resulting signature.
+See `.env.local.example` for full notes on each. All server secrets are server-side only (no `NEXT_PUBLIC_` prefix) — the `service_role` key bypasses RLS and must never reach the client.
+
+Shipyard never has access to your private keys — all transactions are signed in your connected wallet, and Shipyard only receives the resulting signature.
 
 ### Run
 
@@ -148,20 +166,29 @@ Shipyard ships with 20 ready-to-deploy templates:
 
 ```
 shipyard/
+├── middleware.ts             # Canonical-host redirect (production only)
 ├── app/
 │   ├── page.tsx              # Landing page
 │   ├── deploy/page.tsx       # Deploy flow
 │   ├── templates/page.tsx    # Template gallery
 │   ├── interact/[address]/   # Contract interaction
 │   ├── compare/page.tsx      # Network comparison
-│   ├── registry/page.tsx     # Contract registry
-│   ├── api/generate/         # AI contract generation route (OpenRouter proxy)
-│   └── api/registry/         # Server-side GenLayer network scanner
+│   ├── registry/page.tsx     # Public contract registry
+│   ├── history/page.tsx      # Deployment history
+│   ├── terms/, privacy/      # Legal pages
+│   └── api/
+│       ├── generate/         # AI contract generation (OpenRouter proxy)
+│       ├── registry/         # DB-backed registry (+ record/ to log deploys)
+│       ├── verify/           # Contract source verification (SIWE + on-chain match)
+│       ├── auth/             # SIWE nonce / verify / session / logout
+│       ├── analytics/        # First-party event ingestion
+│       └── cron/             # Vercel Cron analytics rollup
 ├── components/
 │   ├── deploy/               # ContractUploader, NetworkSelector, DeployForm, DeployLogs, FaucetWidget, ContractDiff
 │   ├── interact/             # ContractPanel, ReadMethods, WriteMethods
 │   ├── registry/             # RegistryClient
-│   ├── layout/               # Header, Sidebar
+│   ├── auth/                 # SignInButton (SIWE)
+│   ├── layout/               # Header, Sidebar, BottomNav, MobileTopBar, Logo
 │   ├── providers/            # Client-side provider wrappers (Web3, analytics)
 │   └── ui/                   # Button, Card, Spinner, CopyButton, NetworkBadge
 ├── hooks/
@@ -169,11 +196,13 @@ shipyard/
 │   ├── useDeploy.ts          # Deploy orchestration
 │   ├── useWallet.ts          # Wallet connect/disconnect/balance
 │   ├── useNetworkHealth.ts   # Real-time RPC health per network
-│   └── useContract.ts        # Read/write method hooks
+│   ├── useContract.ts        # Read/write method hooks
+│   ├── useSiweAuth.ts        # SIWE sign-in flow + session state
+│   └── useNavNew.ts          # "New" nav badge dismissal (localStorage)
 ├── lib/
 │   ├── genlayer/
 │   │   ├── networks.ts       # Network configs and colors
-│   │   ├── client.ts         # genlayer-js client factory
+│   │   ├── client.ts         # genlayer-js client factory + on-chain helpers
 │   │   ├── parser.ts         # Python contract parser and validator
 │   │   ├── deploy.ts         # Deploy orchestration
 │   │   ├── templates.ts      # 20 contract templates
@@ -181,8 +210,12 @@ shipyard/
 │   ├── ai/
 │   │   ├── models.ts         # OpenRouter model definitions
 │   │   └── systemPrompt.ts   # GenLayer contract generation prompt
+│   ├── supabase/server.ts    # Service-role Supabase client (server-side)
+│   ├── auth/session.ts       # SIWE session JWT (sign/verify)
+│   ├── redis.ts              # Upstash Redis client (graceful if unconfigured)
 │   ├── analytics.ts          # First-party analytics event wrapper
 │   └── diff.ts               # Line-level diff utility
+├── supabase/migrations/      # SQL schema (RLS deny-by-default)
 └── types/index.ts            # Shared TypeScript types
 ```
 
@@ -231,9 +264,11 @@ class MyContract:
 ## Security
 
 - Shipyard **never has access to your private keys**. Transactions are signed inside your connected wallet (MetaMask, Rabby, etc.) via WalletConnect/RainbowKit — Shipyard only receives the resulting signature, never the key.
-- Only the wallet **address** is persisted to localStorage for UX continuity.
-- Two server-side API routes exist: `/api/registry` scans GenLayer networks for deployed contracts, and `/api/generate` proxies AI contract generation requests to OpenRouter. Neither handles keys or stores user data.
-- The OpenRouter API key lives server-side only (`OPENROUTER_API_KEY`) and is never exposed to the client.
+- Only the wallet **address** is persisted to localStorage for UX continuity. First-party analytics hash wallet addresses with a server-side salt (`ANALYTICS_SALT`) before storage — raw wallets are never stored.
+- **Authentication** uses SIWE ("Sign-In with Ethereum"): a wallet signature establishes a session held in a signed, httpOnly JWT cookie (`SESSION_SECRET`). Sign-in nonces are single-use and stored in Redis to prevent replay.
+- **Database access** is server-side only via the Supabase `service_role` key; Row-Level Security is enabled deny-by-default on every table, and the service key is never exposed to the client.
+- All server-side API routes (`/api/generate`, `/api/registry`, `/api/verify`, `/api/auth/*`, `/api/analytics`, `/api/cron/*`) run with secrets that live only on the server. The Vercel Cron route is protected by a bearer secret (`CRON_SECRET`); the OpenRouter key (`OPENROUTER_API_KEY`) never reaches the client.
+- The canonical-host redirect in `middleware.ts` runs in production only, so local/LAN previews are never bounced to the live domain.
 
 ---
 
