@@ -30,3 +30,6 @@ next-env.d.ts
 
 # Supabase CLI scratch
 supabase/.temp/
+
+# Internal planning (not shipped)
+ROADMAP.md
