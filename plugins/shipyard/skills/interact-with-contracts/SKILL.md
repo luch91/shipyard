@@ -44,6 +44,10 @@ https://genshipyard.com/handoff?action=write&network=<id>&state=<token>&address=
 The page never auto-executes — the human clicks Execute and approves. Only the return to your
 callback is automatic.
 
+**Always lead with the link (MUST):** output the handoff URL as a clickable link first — every
+time, including any relaunch — never just say "the page is open." See *Presenting the handoff* in
+[reference/wallet-handoff.md](../../reference/wallet-handoff.md).
+
 ## Verify your result
 
 - The returned `txHash` identifies the write. On Bradbury/Asimov, confirm it on the explorer.
@@ -56,5 +60,6 @@ callback is automatic.
 | Trigger a popup / wallet for a read | Reads are autonomous via genlayer-js |
 | LZString-encode write `args` | Write `args` is a plain JSON array string |
 | Try to auto-click Execute | The human clicks Execute + approves |
+| Say "the page is open" without showing the URL | Always print the clickable handoff link first, every time. |
 | Ask for a private key to "send" a tx | Never — the user signs in their own wallet |
 | Write on a testnet with no GEN | Fund via the faucet first |

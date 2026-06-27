@@ -38,6 +38,10 @@ https://genshipyard.com/handoff?action=verify&network=<id>&state=<token>&address
 - The page runs the SIWE sign-in **only if** there's no active session, then `POST /api/verify`.
   The user approves a **sign-in message** (no gas). Result: `{ verified, attributed }`.
 
+**Always lead with the link (MUST):** output this URL as a clickable link first — every time,
+including any relaunch — never just say "the page is open." See *Presenting the handoff* in
+[reference/wallet-handoff.md](../../reference/wallet-handoff.md).
+
 ## 3. Interpreting the result
 
 - `verified: true` — the source is authentic and now published.
@@ -59,3 +63,4 @@ https://genshipyard.com/handoff?action=verify&network=<id>&state=<token>&address
 | Submit source that differs from deployed | Authenticity compares against on-chain/deploy-tx code |
 | Expect attribution from a non-deployer wallet | Authenticity yes; attribution needs the deployer |
 | Ask for a private key/seed to "sign in" | Never — SIWE is a wallet popup the user approves |
+| Say "the page is open" without showing the URL | Always print the clickable handoff link first, every time. |
