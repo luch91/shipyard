@@ -90,9 +90,28 @@ On failure:
    node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
    ```
 3. **Choose a transport** (loopback by default; relay if remote/headless/port-blocked).
-4. **Open the browser to the URL and also print it** — auto-open can fail or be remote, so the
-   user can always click it manually.
+4. **Print the full URL as a clickable link FIRST, then open the browser** (see *Presenting the
+   handoff* below). The link is the primary path; auto-opening is only a convenience. Show it
+   every time — including on any relaunch — so the user never has to ask for it.
 5. **Wait for the result**, decode the payload, verify `state`, surface `result` (or `error`).
+
+### Presenting the handoff — always lead with the link (MUST)
+
+The **first thing you output for a handoff must be the full, clickable URL**, presented as the
+action — on the first message *and* on every relaunch. Never say only "the page is open in your
+browser": auto-open can fail silently, and the user must never have to ask for the link. Use:
+
+> 👉 **Open this to approve in your wallet:**
+> `https://genshipyard.com/handoff?action=…`
+>
+> Then: connect/confirm your wallet → click Deploy / Execute / Verify → approve.
+
+- A new run mints a new `state` (and port), so the URL changes — **re-show the new link every
+  time** you (re)launch.
+- Keep the window **generous and stable** (the reference listener and relay below use a
+  **10-minute** window) and **reuse the same URL while it's still valid** rather than recycling
+  the token/port — a churning link is exactly what forces the user to keep asking.
+- Auto-opening the browser is a convenience layered on top — never the only path.
 
 ### Open the browser (cross-platform)
 | OS | Command |
@@ -130,7 +149,7 @@ from stderr, build the `callback` URL, then open the browser.
 // handoff-listener.js  —  usage: node handoff-listener.js <state>
 const http = require('http');
 const STATE = process.argv[2];
-const TIMEOUT_MS = 180000; // ≥ 3 min: must exceed deploy finalization (~30s)
+const TIMEOUT_MS = 600000; // 10 min — a stable, generous window; reuse this URL while it's open
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
@@ -157,7 +176,7 @@ setTimeout(() => { process.stderr.write('TIMEOUT\n'); process.exit(1); }, TIMEOU
 Flow:
 1. `node handoff-listener.js <state>` (run in background; capture stderr for `PORT=`).
 2. Build `callback=http://127.0.0.1:<port>/cb` and the full handoff URL.
-3. Open the browser + print the URL.
+3. Print the URL as a clickable link (always), then open the browser.
 4. When the user approves, the listener prints the base64url payload to stdout and exits.
 5. Decode + verify `state`.
 
@@ -176,7 +195,7 @@ Build the URL with `relay=1` (no `callback`), open the browser, then poll:
 node -e "
 const state=process.argv[1];
 const url='https://genshipyard.com/api/handoff/result?state='+encodeURIComponent(state);
-const deadline=Date.now()+180000;
+const deadline=Date.now()+600000;
 (async function loop(){
   if(Date.now()>deadline){console.error('TIMEOUT');process.exit(1);}
   const r=await fetch(url);

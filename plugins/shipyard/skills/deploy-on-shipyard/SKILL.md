@@ -66,7 +66,12 @@ https://genshipyard.com/handoff?action=deploy&network=<id>&state=<token>&source=
 ```
 
 (or `&relay=1` instead of `callback` when remote/headless). Start your loopback listener (or
-relay poll) **before** opening the browser, then open it **and** print the URL.
+relay poll) **before** opening the browser.
+
+**Always lead with the link (MUST).** Output the full handoff URL as a clickable link *first* —
+on the first message and on every relaunch — then open the browser as a convenience. Never just
+say "the page is open"; the user must never have to ask for the URL. See *Presenting the handoff*
+in [reference/wallet-handoff.md](../../reference/wallet-handoff.md).
 
 **The page never auto-deploys.** The user clicks **Deploy**, then approves the transaction in
 their wallet. Only the return to your callback is automatic — do not try to bypass the click.
@@ -103,6 +108,7 @@ step from you.
 |---|---|
 | Ask for / accept a private key or seed phrase | Never. The user signs in their own wallet popup. |
 | Try to auto-fire or script-click the Deploy button | The human clicks Deploy + approves; only the return is automatic. |
+| Say "the page is open" without showing the URL | Always print the clickable handoff link first — every time, including relaunches. |
 | Use a floating runner tag (`py-genlayer:test/latest/dev`) | Use the pinned `RUNNER_HASH` header. |
 | Pick Bradbury vs Asimov by chain id | They share `4221` — use the `network` param + name. |
 | Deploy on a testnet with an empty wallet | Claim GEN from the faucet first. |
