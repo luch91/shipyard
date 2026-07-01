@@ -5,13 +5,13 @@
     "url": "https://genshipyard.com"
   },
   "metadata": {
-    "description": "Shipyard skills — deploy, discover, interact with, and verify GenLayer Intelligent Contracts in the browser, no CLI."
+    "description": "Shipyard skills — deploy, discover, interact with, and verify GenLayer Intelligent Contracts straight from your CLI."
   },
   "plugins": [
     {
       "name": "shipyard",
       "source": "./plugins/shipyard",
-      "description": "Deploy, discover, and interact with GenLayer Intelligent Contracts via Shipyard — no CLI. The user signs with their own wallet via a browser popup; the agent never holds a key."
+      "description": "Deploy, discover, and interact with GenLayer Intelligent Contracts via Shipyard, straight from your CLI. The user signs with their own wallet via a browser popup; the agent never holds a key."
     }
   ]
 }

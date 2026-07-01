@@ -1,13 +1,13 @@
 ---
 name: using-shipyard
-description: Entry point for the Shipyard journey — deploy, discover, interact with, and verify GenLayer Intelligent Contracts in the browser with no CLI. Use when a user wants to use Shipyard / genshipyard, or asks how to deploy or interact with a GenLayer contract via Shipyard. Routes to the right sub-skill.
+description: Entry point for the Shipyard journey — deploy, discover, interact with, and verify GenLayer Intelligent Contracts straight from your CLI. Use when a user wants to use Shipyard / genshipyard, or asks how to deploy or interact with a GenLayer contract via Shipyard. Routes to the right sub-skill.
 allowed-tools: Read, WebFetch
 ---
 
 # Using Shipyard — the journey
 
-Shipyard deploys, discovers, interacts with, and verifies **GenLayer Intelligent Contracts** from
-the browser — **no CLI**. This skill is the router: it explains the flow and points to the right
+Shipyard deploys, discovers, interacts with, and verifies **GenLayer Intelligent Contracts**
+straight from your **CLI**. This skill is the router: it explains the flow and points to the right
 sub-skill.
 
 ## The signing model (one line)

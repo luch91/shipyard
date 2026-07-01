@@ -6,7 +6,7 @@ import CopyButton from '@/components/ui/CopyButton'
 export const metadata: Metadata = {
   title: 'Skills',
   description:
-    'Shipyard Skills — a Claude Code plugin that teaches agents the full Shipyard journey: deploy, discover, interact with, and verify GenLayer Intelligent Contracts in the browser, no CLI.',
+    'Shipyard Skills. A Claude Code plugin that teaches agents the full Shipyard journey: deploy, discover, interact with, and verify GenLayer Intelligent Contracts straight from your CLI.',
 }
 
 const REPO_URL = 'https://github.com/luch91/shipyard'
@@ -42,7 +42,7 @@ const SKILLS: { name: string; role: Role; icon: typeof Rocket; blurb: string }[]
     name: 'shipyard-registry',
     role: 'Autonomous',
     icon: Search,
-    blurb: 'Browse and search the public contract registry — find contracts, check verified status, list by network. No wallet.',
+    blurb: 'Browse and search the public contract registry: find contracts, check verified status, list by network. No wallet.',
   },
   {
     name: 'interact-with-contracts',
@@ -54,7 +54,7 @@ const SKILLS: { name: string; role: Role; icon: typeof Rocket; blurb: string }[]
     name: 'verify-contract-source',
     role: 'Gasless popup',
     icon: ShieldCheck,
-    blurb: 'Publish a contract’s source as verified and optionally attribute it to your wallet — a gasless SIWE sign-in.',
+    blurb: 'Publish a contract’s source as verified and optionally attribute it to your wallet, a gasless SIWE sign-in.',
   },
   {
     name: 'shipyard-networks',
@@ -80,9 +80,9 @@ export default function SkillsPage() {
       <header className="flex flex-col gap-3">
         <h1 className="font-[Syne] text-3xl font-bold text-white">Shipyard Skills</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-neutral-400">
-          A Claude Code plugin that teaches agents the full Shipyard journey —{' '}
+          A Claude Code plugin that teaches agents the full Shipyard journey:{' '}
           <span className="text-neutral-200">deploy → discover → interact → verify</span> GenLayer
-          Intelligent Contracts, straight from the browser. No CLI.
+          Intelligent Contracts, straight from your CLI.
         </p>
         <a
           href={REPO_URL}
@@ -115,7 +115,7 @@ export default function SkillsPage() {
           <p className="text-sm leading-relaxed text-neutral-300">
             <span className="font-semibold text-emerald-300">Signing model:</span> you always sign
             with your <span className="text-white">own wallet</span> via a real browser popup. The
-            agent prepares everything headlessly, then hands off for your approval — it never holds a
+            agent prepares everything headlessly, then hands off for your approval. It never holds a
             key, and no private key or seed phrase is ever requested.
           </p>
         </Card>
@@ -151,9 +151,10 @@ export default function SkillsPage() {
 
       {/* Footer note */}
       <p className="mt-12 text-xs leading-relaxed text-neutral-600">
-        Shipyard pairs with GenLayer&apos;s own skills — it defers contract authoring to{' '}
+        Shipyard pairs with GenLayer&apos;s own skills: it defers contract authoring to{' '}
         <code className="text-neutral-400">write-contract</code> and raw SDK reads to{' '}
-        <code className="text-neutral-400">genlayer-cli</code>, and adds the no-CLI browser flow.
+        <code className="text-neutral-400">genlayer-cli</code>, and adds the deploy, interact, and
+        verify flow with in-browser wallet signing.
       </p>
     </div>
   )
