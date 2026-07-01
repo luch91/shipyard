@@ -1,6 +1,6 @@
 ---
 name: deploy-on-shipyard
-description: Deploy a GenLayer Intelligent Contract through Shipyard's browser flow (no CLI). Use when a user wants to deploy a .py contract to Bradbury, Asimov, Studionet, or Localnet. The user signs the deploy transaction in their own wallet via a browser popup.
+description: Deploy a GenLayer Intelligent Contract through Shipyard, driven from your CLI. Use when a user wants to deploy a .py contract to Bradbury, Asimov, Studionet, or Localnet. The user signs the deploy transaction in their own wallet via a browser popup.
 allowed-tools: Read, Grep, Glob, WebFetch, Bash
 ---
 
