@@ -53,7 +53,11 @@ export default function NetworkSelector() {
                   toast.success(`Now targeting ${network.name}`)
                 }
                 setSelectedNetwork(network.id as NetworkId)
-                track('network_selected', { network_id: network.id, network_name: network.name })
+                track('network_selected', {
+                  network: network.id,
+                  network_id: network.id,
+                  network_name: network.name,
+                })
               }}
               className={clsx(
                 'relative flex flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50',

@@ -9,6 +9,7 @@ import { AlertTriangle, Rocket, ShieldCheck, Terminal, Wallet, Zap } from 'lucid
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
 import { coerceArgs } from '@/hooks/useDeploy'
 import { deployContract } from '@/lib/genlayer/deploy'
+import { track } from '@/lib/analytics'
 import { writeContractMethodWithProvider } from '@/lib/genlayer/client'
 import { useAuth } from '@/components/providers/SiweAuthProvider'
 import { NETWORKS, getNetwork } from '@/lib/genlayer/networks'
@@ -265,6 +266,16 @@ function HandoffInner() {
     try {
       const provider = await connector.getProvider()
       const argsForDeploy = coerceArgs(deployArgs, intent.parsed!.constructorParams)
+      const contractName = intent.parsed!.className
+      // Mirror the web deploy flow's analytics so CLI/agent (handoff) deploys also
+      // appear in the dashboard's activity stages: contract_loaded → started →
+      // succeeded. track() uses sendBeacon, so it survives the returnResult navigation.
+      track('contract_loaded', { method: 'handoff', contract_name: contractName })
+      track('deployment_started', {
+        network,
+        contract_name: contractName,
+        has_constructor_args: Object.keys(deployArgs).length > 0,
+      })
       const result = await deployContract({
         contractSource: intent.source!,
         constructorArgs: argsForDeploy,
@@ -284,6 +295,11 @@ function HandoffInner() {
           keepalive: true,
         }).catch(() => {})
       }
+      track('deployment_succeeded', {
+        network,
+        contract_name: contractName,
+        contract_address: result.contractAddress,
+      })
       await returnResult({
         v: HANDOFF_VERSION,
         state,
@@ -298,6 +314,11 @@ function HandoffInner() {
         },
       })
     } catch (e) {
+      track('deployment_failed', {
+        network,
+        contract_name: intent.parsed!.className,
+        error: e instanceof Error ? e.message : String(e),
+      })
       fail(e)
       setStatus('done')
     }

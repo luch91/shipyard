@@ -31,8 +31,9 @@ export default function BottomNav() {
     return () => clearInterval(interval)
   }, [])
 
-  // Hide on landing page
-  if (pathname === '/') return null
+  // Landing has its own header, and the admin control room uses a standalone
+  // shell rather than the public app navigation.
+  if (pathname === '/' || pathname.startsWith('/admin')) return null
 
   const isActive = (href: string) =>
     href === '/history' ? pathname === '/history' : pathname.startsWith(href)

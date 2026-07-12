@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHash } from 'crypto'
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
 import { rateLimit, getClientIp } from '@/lib/ratelimit'
+import { hashWallet } from '@/lib/analytics/hashWallet'
 
 // First-party analytics ingest (replaces PostHog). Writes one row to
 // analytics_events. Fire-and-forget contract: ALWAYS returns 200 so client
@@ -26,17 +26,6 @@ interface EventBody {
   template_id?: string
   contract_address?: string
   metadata?: Record<string, unknown>
-}
-
-// Hash the wallet so raw addresses are never stored (PRD §8/§17). FAILS CLOSED:
-// returns null when ANALYTICS_SALT is not set, rather than falling back to a known
-// default salt. Wallet addresses are public, so a public/default salt would make
-// the "pseudonymized" hash trivially reversible by dictionary — better to store no
-// wallet hash at all than a reversible one.
-function hashWallet(wallet: string): string | null {
-  const salt = process.env.ANALYTICS_SALT
-  if (!salt) return null
-  return createHash('sha256').update(salt + wallet.toLowerCase()).digest('hex')
 }
 
 export async function POST(req: NextRequest) {

@@ -30,7 +30,12 @@ function TemplateCard({ template }: { template: ContractTemplate }) {
         setConstructorArg(param.name, param.type === 'bool' ? param.defaultValue.toLowerCase() : param.defaultValue)
       }
     }
-    track('template_selected', { template_name: template.name, difficulty: template.difficulty, tags: template.tags })
+    track('template_selected', {
+      template_id: template.id,
+      template_name: template.name,
+      difficulty: template.difficulty,
+      tags: template.tags,
+    })
     router.push('/deploy')
   }
 

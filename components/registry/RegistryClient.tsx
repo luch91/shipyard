@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { RefreshCw, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react'
 import clsx from 'clsx'
 import NetworkBadge from '@/components/ui/NetworkBadge'
+import { track } from '@/lib/analytics'
 import type { NetworkId } from '@/types'
 import type { ContractEntry } from '@/app/api/registry/route'
 
@@ -20,6 +21,10 @@ export default function RegistryClient() {
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState<string | null>(null)
   const [copied, setCopied]       = useState<string | null>(null)
+
+  useEffect(() => {
+    track('registry_viewed')
+  }, [])
 
   const load = async (net: NetworkId) => {
     setLoading(true)

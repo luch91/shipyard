@@ -22,6 +22,7 @@ const ENV_VARS: EnvVar[] = [
   { name: 'OPENROUTER_API_KEY', required: false, note: 'AI contract generation returns 500' },
   { name: 'ANALYTICS_SALT', required: false, note: 'wallet hashing fails closed — events store no wallet attribution' },
   { name: 'CRON_SECRET', required: false, note: 'analytics rollup cron is unavailable (401)' },
+  { name: 'ADMIN_PASSWORD', required: false, note: 'password login for /admin disabled; use an admin wallet' },
   { name: 'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID', required: false, note: 'WalletConnect (mobile / QR) disabled; injected wallets still work' },
 ]
 

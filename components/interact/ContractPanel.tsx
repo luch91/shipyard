@@ -146,7 +146,12 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
       const d = await res.json()
       if (!res.ok) throw new Error(d.error ?? 'Verification failed.')
       await fetchVerifyStatus()
-      track('contract_verified', { address, network: networkId, attributed: !!d.attributed })
+      track('contract_verified', {
+        contract_address: address,
+        address,
+        network: networkId,
+        attributed: !!d.attributed,
+      })
       toast.success(d.attributed ? 'Verified & attributed to your wallet!' : 'Verified — source matches on-chain!')
     } catch (e) {
       setVerifyError(e instanceof Error ? e.message : 'Verification failed.')
@@ -158,7 +163,12 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
   const handleFork = () => {
     if (!parsed) return
     setContractSource(parsed.raw)
-    track('contract_forked', { contract_name: parsed.className, address })
+    track('contract_forked', {
+      contract_name: parsed.className,
+      contract_address: address,
+      address,
+      network: networkId,
+    })
     router.push('/deploy')
   }
 
@@ -169,7 +179,12 @@ export default function ContractPanel({ address, networkId }: ContractPanelProps
     try {
       await navigator.clipboard.writeText(url)
       toast.success('Deployable link copied!')
-      track('source_link_shared', { contract_name: parsed.className, address })
+      track('source_link_shared', {
+        contract_name: parsed.className,
+        contract_address: address,
+        address,
+        network: networkId,
+      })
     } catch {
       toast.error('Could not copy link.')
     }

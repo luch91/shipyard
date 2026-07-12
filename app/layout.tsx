@@ -6,6 +6,8 @@ import Header from '@/components/layout/Header'
 import MobileTopBar from '@/components/layout/MobileTopBar'
 import Sidebar from '@/components/layout/Sidebar'
 import BottomNav from '@/components/layout/BottomNav'
+import AppMain from '@/components/layout/AppMain'
+import PoweredByGenLayer from '@/components/layout/PoweredByGenLayer'
 import { AnalyticsPageView } from '@/components/providers/AnalyticsPageView'
 import { SidebarProvider } from '@/components/providers/SidebarContext'
 import { Web3Provider } from '@/components/providers/Web3Provider'
@@ -82,34 +84,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MobileTopBar />
         <div className="flex min-h-screen">
           <Sidebar />
-          {/* pb on mobile clears the fixed BottomNav so content isn't hidden behind it */}
-          <main className="min-w-0 flex-1 pb-16 lg:pb-0">{children}</main>
+          {/* Mobile padding clears BottomNav; the standalone admin shell omits both. */}
+          <AppMain>{children}</AppMain>
         </div>
 
         {/* Mobile bottom navigation — hidden on lg where the Sidebar is shown */}
         <BottomNav />
 
-        {/* GenLayer logo — fixed bottom-right */}
-        <a
-          href="https://genlayer.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Powered by GenLayer"
-          className="fixed bottom-[4.5rem] right-4 z-50 flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/90 py-1.5 pl-1.5 pr-1.5 shadow-lg backdrop-blur-sm transition-all hover:border-neutral-600 hover:shadow-emerald-500/10 sm:pr-3 lg:bottom-4"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://pbs.twimg.com/profile_images/2011221321754034176/AaBmFyfD_400x400.jpg"
-            alt="GenLayer"
-            width={22}
-            height={22}
-            className="rounded-full invert"
-          />
-          {/* Label hidden on mobile so the badge stays a compact icon and doesn't overlap content */}
-          <span className="hidden font-mono text-[11px] text-neutral-500 sm:inline">
-            Powered by <span className="text-neutral-300">GenLayer</span>
-          </span>
-        </a>
+        <PoweredByGenLayer />
 
         <Toaster
           position="bottom-center"

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
+import { collectPaginatedRows } from '@/lib/analytics/paginate'
 
 // Daily analytics rollup. Triggered by Vercel Cron (once a day) — see vercel.json.
 // Aggregates a single day's analytics_events into one analytics_daily_rollups row.
@@ -13,6 +14,7 @@ function ymd(d: Date): string {
 }
 
 interface EventRow {
+  id: string
   event_name: string
   wallet_hash: string | null
   network: string | null
@@ -37,18 +39,36 @@ export async function GET(req: NextRequest) {
   const dayEnd = `${ymd(new Date(Date.parse(`${date}T00:00:00Z`) + 86_400_000))}T00:00:00.000Z`
 
   const sb = getSupabaseAdmin()
-  const { data, error } = await sb
-    .from('analytics_events')
-    .select('event_name, wallet_hash, network, template_id, metadata')
-    .gte('created_at', dayStart)
-    .lt('created_at', dayEnd)
-    .range(0, 49_999)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  let eventFetch: Awaited<ReturnType<typeof collectPaginatedRows<EventRow>>>
+  try {
+    eventFetch = await collectPaginatedRows<EventRow>(async (from, to) => {
+      const { data, error } = await sb
+        .from('analytics_events')
+        .select('id, event_name, wallet_hash, network, template_id, metadata')
+        .gte('created_at', dayStart)
+        .lt('created_at', dayEnd)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to)
+      if (error) throw error
+      return (data ?? []) as EventRow[]
+    }, { pageSize: 1_000, maxRows: 50_000 })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to read analytics events.' },
+      { status: 500 },
+    )
   }
 
-  const rows = (data ?? []) as EventRow[]
+  // Never persist a knowingly partial daily rollup.
+  if (eventFetch.truncated) {
+    return NextResponse.json(
+      { error: 'Daily event volume reached the 50,000-row safety limit; rollup was not written.' },
+      { status: 503 },
+    )
+  }
+
+  const rows = eventFetch.rows
   const wallets = new Set<string>()
   const byNetwork: Record<string, number> = {}
   const templateCounts: Record<string, number> = {}

@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 // issues/reads it lives entirely server-side; the client never sees the secret.
 
 export const SESSION_COOKIE = 'shipyard_session'
+export const ADMIN_SESSION_COOKIE = 'shipyard_admin_session'
 export const NONCE_COOKIE = 'shipyard_siwe_nonce'
 
 const ISSUER = 'shipyard'
@@ -21,6 +22,8 @@ function getKey(): Uint8Array {
 export interface SessionPayload {
   address: string
   chainId?: number
+  // True for the shared-password admin session (no wallet). Wallet sessions omit it.
+  admin?: boolean
 }
 
 export async function createSessionToken(address: string, chainId?: number): Promise<string> {
@@ -33,13 +36,27 @@ export async function createSessionToken(address: string, chainId?: number): Pro
     .sign(getKey())
 }
 
+// Shared-password admin session — no wallet address, carries an `admin` claim.
+// Same signing key, issuer, and lifetime as a wallet session.
+export async function createAdminSessionToken(): Promise<string> {
+  return new SignJWT({ admin: true, address: '' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuer(ISSUER)
+    .setSubject('admin')
+    .setIssuedAt()
+    .setExpirationTime(`${MAX_AGE_SECONDS}s`)
+    .sign(getKey())
+}
+
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, getKey(), { issuer: ISSUER })
-    const address = typeof payload.address === 'string' ? payload.address : null
-    if (!address) return null
+    const address = typeof payload.address === 'string' ? payload.address : ''
+    const admin = payload.admin === true
+    if (!address && !admin) return null
     return {
       address,
+      admin,
       chainId: typeof payload.chainId === 'number' ? payload.chainId : undefined,
     }
   } catch {
@@ -53,6 +70,15 @@ export async function getSession(): Promise<SessionPayload | null> {
   const token = cookies().get(SESSION_COOKIE)?.value
   if (!token) return null
   return verifySessionToken(token)
+}
+
+// Password-admin authentication is intentionally kept in a separate cookie so
+// entering or leaving /admin never replaces the user's wallet SIWE session.
+export async function getPasswordAdminSession(): Promise<SessionPayload | null> {
+  const token = cookies().get(ADMIN_SESSION_COOKIE)?.value
+  if (!token) return null
+  const session = await verifySessionToken(token)
+  return session?.admin === true ? session : null
 }
 
 export const sessionCookieOptions = {
