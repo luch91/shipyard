@@ -373,7 +373,7 @@ export default function ContractUploader() {
               {/* Rate limit warning */}
               {remaining !== null && remaining <= 3 && (
                 <p className="text-center text-xs text-amber-400">
-                  ⚠️ {remaining} free generation{remaining === 1 ? '' : 's'} left this hour
+                  ⚠️ {remaining} generation{remaining === 1 ? '' : 's'} left today
                 </p>
               )}
             </div>
