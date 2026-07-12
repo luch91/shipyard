@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { Rocket, Search, Zap, ShieldCheck, Network, Compass, Github } from 'lucide-react'
+import { Rocket, Search, Zap, ShieldCheck, Network, Compass } from 'lucide-react'
+import GithubIcon from '@/components/ui/GithubIcon'
 import Card from '@/components/ui/Card'
 import CopyButton from '@/components/ui/CopyButton'
 
@@ -90,7 +91,7 @@ export default function SkillsPage() {
           rel="noopener noreferrer"
           className="flex w-fit items-center gap-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-white"
         >
-          <Github size={14} />
+          <GithubIcon size={14} />
           View on GitHub
         </a>
       </header>

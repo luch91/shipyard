@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ExternalLink, Github } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import GithubIcon from '@/components/ui/GithubIcon'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import Logo from './Logo'
 
@@ -39,7 +40,7 @@ export default function Header() {
             className="hidden sm:flex items-center gap-1 text-sm font-medium text-neutral-400 transition-colors hover:text-white"
             aria-label="Shipyard on GitHub"
           >
-            <Github size={15} />
+            <GithubIcon size={15} />
             GitHub
           </a>
           <ConnectButton chainStatus="none" />
