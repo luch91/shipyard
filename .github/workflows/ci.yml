@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      # Fail only on CRITICAL advisories. The repo currently carries known
+      # moderate/high transitive vulns in the wallet + eslint toolchains whose
+      # fixes require breaking major bumps (tracked separately), so gating on
+      # those would keep CI permanently red. Criticals are currently zero, so
+      # this catches any newly-introduced critical without blocking day to day.
+      - name: Audit (fail on critical)
+        run: npm audit --audit-level=critical

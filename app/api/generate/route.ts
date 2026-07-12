@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GENLAYER_SYSTEM_PROMPT } from '@/lib/ai/systemPrompt'
 import { AI_MODELS } from '@/lib/ai/models'
 import { validateContract } from '@/lib/genlayer/parser'
+import { rateLimit, getClientIp } from '@/lib/ratelimit'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -15,33 +16,15 @@ interface OpenRouterMessage {
   content: string
 }
 
-// ── Rate limiting — simple in-memory store ────────────────────────────────────
-// Limits free-model users to 10 generations per hour per IP.
-// Paid models (no :free suffix) bypass this limit.
-// Resets on server restart — intentional for serverless deployment.
+// ── Limits ────────────────────────────────────────────────────────────────────
+// Every generation can cost up to two OpenRouter calls (the initial generation
+// plus one repair pass), so the endpoint is rate limited per client IP to protect
+// the account from being drained. The limiter lives in lib/ratelimit.ts (Redis-
+// backed and global across serverless instances; in-memory fallback without Redis).
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const FREE_LIMIT = 10
-const WINDOW_MS = 60 * 60 * 1000
-
-function checkRateLimit(ip: string, modelId: string): { allowed: boolean; remaining: number } {
-  if (!modelId.includes(':free')) return { allowed: true, remaining: Infinity }
-
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS })
-    return { allowed: true, remaining: FREE_LIMIT - 1 }
-  }
-
-  if (entry.count >= FREE_LIMIT) {
-    return { allowed: false, remaining: 0 }
-  }
-
-  entry.count++
-  return { allowed: true, remaining: FREE_LIMIT - entry.count }
-}
+const GENERATE_LIMIT = 3 // generations per IP per window
+const WINDOW_SECONDS = 24 * 60 * 60 // 24 hours
+const MAX_DESCRIPTION_CHARS = 4000
 
 // ── OpenRouter call + output cleaning ─────────────────────────────────────────
 
@@ -115,17 +98,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Description is required.' }, { status: 400 })
   }
 
+  if (description.trim().length > MAX_DESCRIPTION_CHARS) {
+    return NextResponse.json(
+      { error: `Description is too long (max ${MAX_DESCRIPTION_CHARS} characters).` },
+      { status: 400 }
+    )
+  }
+
   if (!modelId || !AI_MODELS.find((m) => m.id === modelId)) {
     return NextResponse.json({ error: 'Invalid model ID.' }, { status: 400 })
   }
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-  const { allowed, remaining } = checkRateLimit(ip, modelId)
-
+  // Rate limit every request (each costs real tokens), keyed by the real client IP.
+  const ip = getClientIp(req)
+  const { allowed, remaining, retryAfter } = await rateLimit(
+    `generate:${ip}`,
+    GENERATE_LIMIT,
+    WINDOW_SECONDS
+  )
   if (!allowed) {
     return NextResponse.json(
-      { error: 'Rate limit reached for free models. Try the paid Qwen3 Coder or wait 1 hour.' },
-      { status: 429 }
+      { error: 'Generation rate limit reached. Please wait a bit and try again.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfter) } }
     )
   }
 
@@ -180,7 +174,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       contract,
       model: modelId,
-      remaining: remaining === Infinity ? null : remaining,
+      remaining,
       repaired,
     })
   } catch (err: unknown) {

@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
 import { getRedis } from '@/lib/redis'
+import { rateLimit, getClientIp } from '@/lib/ratelimit'
 import { getDeployTx } from '@/lib/genlayer/client'
 import { NETWORKS } from '@/lib/genlayer/networks'
 import type { NetworkId } from '@/types'
 
 export const dynamic = 'force-dynamic'
+
+// Anti-spam ceiling per IP. Generous — a real session deploys few contracts —
+// but bounds junk writes and the on-chain lookups they trigger.
+const RECORD_LIMIT = 30 // records per IP per window
+const RECORD_WINDOW_SECONDS = 60 * 60 // 1 hour
 
 // Records a deployed contract into the registry (contracts table) so it becomes
 // discoverable. Confirms the contract actually exists on-chain first (anti-spam).
@@ -14,6 +20,19 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   try {
     if (!isSupabaseConfigured()) return NextResponse.json({ ok: true })
+
+    const ip = getClientIp(req)
+    const { allowed, retryAfter } = await rateLimit(
+      `registry-record:${ip}`,
+      RECORD_LIMIT,
+      RECORD_WINDOW_SECONDS,
+    )
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many registry submissions. Please slow down.' },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } },
+      )
+    }
 
     const body = (await req.json().catch(() => ({}))) as {
       address?: unknown
