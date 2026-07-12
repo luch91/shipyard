@@ -9,6 +9,12 @@ updates:
       # Batch low-risk dev-dependency bumps into a single PR to cut noise.
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # Major bumps are handled deliberately, not auto-proposed: the wallet stack
+      # (wagmi/viem/rainbowkit) and Next majors are coupled/breaking, and lucide 1.x
+      # dropped brand icons. Minors/patches still flow through.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
