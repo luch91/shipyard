@@ -9,7 +9,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { parseContract, validateContract } from '@/lib/genlayer/parser'
 import { track } from '@/lib/analytics'
 import toast from 'react-hot-toast'
-import { AI_MODELS, DEFAULT_MODEL_ID } from '@/lib/ai/models'
+import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 
 // Monaco is heavy — load it lazily, only in this component (per CLAUDE.md rule)
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
@@ -160,8 +160,6 @@ export default function ContractUploader() {
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
-
-  const currentModel = AI_MODELS.find((m) => m.id === selectedModel)
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'upload', label: 'Upload', icon: <Upload size={12} /> },
@@ -315,14 +313,6 @@ export default function ContractUploader() {
           {/* Generate tab */}
           {activeTab === 'generate' && (
             <div className="flex flex-col gap-4 p-4">
-              {/* Model — single supported model, shown as a static label */}
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-neutral-400">Model:</span>
-                <span className="font-mono text-xs font-medium text-neutral-200">
-                  {currentModel?.label ?? 'Qwen3 Coder'}
-                </span>
-              </div>
-
               {/* Description textarea */}
               <div className="flex flex-col gap-1.5">
                 <label className="font-mono text-xs text-neutral-400">Describe your contract</label>
@@ -356,9 +346,9 @@ export default function ContractUploader() {
               </button>
 
               {/* Status line */}
-              {isGenerating && currentModel && (
+              {isGenerating && (
                 <p className="text-center text-xs text-neutral-500">
-                  Generating with {currentModel.label}...
+                  Generating your contract...
                 </p>
               )}
               {generateSuccess && !isGenerating && (
