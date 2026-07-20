@@ -15,7 +15,7 @@ import Card from '@/components/ui/Card'
 import MainnetConfirmDialog from '@/components/deploy/MainnetConfirmDialog'
 import type { NetworkId, DeployLog, DeployResult } from '@/types'
 
-const COMPARABLE_NETWORKS: NetworkId[] = ['testnet-bradbury', 'testnet-asimov', 'studionet', 'localnet']
+const COMPARABLE_NETWORKS: NetworkId[] = ['testnet-bradbury', 'testnet-asimov', 'studionet']
 
 // ─── Single network deploy column ────────────────────────────────────────────
 

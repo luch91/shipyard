@@ -1,4 +1,4 @@
-import { getAllNetworks, NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
+import { getLiveNetworks, NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
 import HeroSection from '@/components/landing/HeroSection'
 import StatsBar from '@/components/landing/StatsBar'
 import HowItWorksSection from '@/components/landing/HowItWorksSection'
@@ -9,7 +9,9 @@ import CTABanner from '@/components/landing/CTABanner'
 import Footer from '@/components/landing/Footer'
 
 export default function HomePage() {
-  const networks = getAllNetworks()
+  // Live testnets only — localnet is no longer surfaced (Testnet Clarke is the
+  // upcoming fourth network, teased on the deploy page).
+  const networks = getLiveNetworks()
 
   return (
     <div className="mx-auto max-w-5xl px-4">

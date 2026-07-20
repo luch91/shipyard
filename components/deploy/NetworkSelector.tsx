@@ -1,6 +1,6 @@
 'use client'
 
-import { getAllNetworks } from '@/lib/genlayer/networks'
+import { getLiveNetworks } from '@/lib/genlayer/networks'
 import { NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { useNetworkHealth } from '@/hooks/useNetworkHealth'
@@ -28,7 +28,9 @@ function HealthIcon({ status, networkId }: { status: HealthStatus; networkId: Ne
 
 export default function NetworkSelector() {
   const { selectedNetwork, setSelectedNetwork } = useDeployStore()
-  const networks = getAllNetworks()
+  // Live testnets only (excludes localnet, isLive:false). Testnet Clarke is shown
+  // as a "Soon" teaser below, replacing localnet as the fourth network card.
+  const networks = getLiveNetworks()
   const health = useNetworkHealth()
 
   return (
