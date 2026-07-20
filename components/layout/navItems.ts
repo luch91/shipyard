@@ -1,5 +1,5 @@
 import {
-  Rocket, LayoutTemplate, GitCompare, Database, History,
+  Rocket, LayoutTemplate, GitCompare, Database, History, Trophy,
 } from 'lucide-react'
 
 // Shared navigation config used by both the desktop Sidebar and the mobile
@@ -14,5 +14,6 @@ export const NAV_ITEMS = [
   { href: '/templates', label: 'Templates', Icon: LayoutTemplate, soon: false, isNew: false },
   { href: '/compare',   label: 'Compare',   Icon: GitCompare,     soon: false, isNew: false },
   { href: '/registry',  label: 'Registry',  Icon: Database,       soon: false, isNew: true  },
+  { href: '/builders',  label: 'Builders',  Icon: Trophy,         soon: false, isNew: true  },
   { href: '/history',   label: 'History',   Icon: History,        soon: false, isNew: false },
 ] as const
