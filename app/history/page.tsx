@@ -114,19 +114,58 @@ function DeploymentCard({ deployment }: { deployment: DeploymentRecord }) {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+// Merge two record sets, deduped by address. Local records are richer (they carry
+// txHash + constructorParams), so on a collision the local copy wins; server-only
+// records fill in deploys made on other devices/browsers. Sorted newest-first.
+function mergeRecords(
+  local: DeploymentRecord[],
+  server: DeploymentRecord[]
+): DeploymentRecord[] {
+  const byAddress = new Map<string, DeploymentRecord>()
+  for (const r of server) byAddress.set(r.address.toLowerCase(), r)
+  for (const r of local) byAddress.set(r.address.toLowerCase(), r) // local overrides
+  return [...byAddress.values()].sort((a, b) => b.deployedAt - a.deployedAt)
+}
+
 export default function HistoryPage() {
   const [deployments, setDeployments] = useState<DeploymentRecord[]>([])
   const [loading,     setLoading]     = useState(true)
+  const [synced,      setSynced]      = useState(false)
 
+  // Load the local (per-browser) history immediately — works signed-out and offline.
   useEffect(() => {
+    let local: DeploymentRecord[] = []
     try {
-      const raw   = localStorage.getItem('gendeploy:deployments')
-      const local = raw ? JSON.parse(raw) : []
+      const raw = localStorage.getItem('gendeploy:deployments')
+      local = raw ? JSON.parse(raw) : []
       setDeployments(local)
     } catch {
       setDeployments([])
     } finally {
       setLoading(false)
+    }
+
+    // Then fold in server-synced history for signed-in wallets. Additive and
+    // best-effort: any failure leaves the local view untouched.
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/history')
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          signedIn?: boolean
+          deployments?: DeploymentRecord[]
+        }
+        if (cancelled || !data.signedIn || !Array.isArray(data.deployments)) return
+        setSynced(true)
+        setDeployments((current) => mergeRecords(current.length ? current : local, data.deployments!))
+      } catch {
+        // offline or not configured — keep local-only history
+      }
+    })()
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -142,7 +181,7 @@ export default function HistoryPage() {
         </h1>
         <p className="text-sm text-neutral-500">
           {deployments.length > 0
-            ? `${deployments.length} contract${deployments.length !== 1 ? 's' : ''} deployed this session`
+            ? `${deployments.length} contract${deployments.length !== 1 ? 's' : ''} deployed${synced ? ' · synced to your wallet' : ' on this device'}`
             : 'Your deployed contracts will appear here'}
         </p>
       </div>
