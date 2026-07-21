@@ -4,11 +4,23 @@ import type { NextRequest } from 'next/server'
 const CANONICAL_HOST = 'genshipyard.com'
 const SKILLS_HOST = 'skills.genshipyard.com'
 
+// Whether this is the real production deployment. NODE_ENV is 'production' for
+// every `next build`, including preview deployments, so testing it here sent
+// previews to the canonical host — i.e. straight to production — which made them
+// impossible to review. VERCEL_ENV ('production' | 'preview' | 'development')
+// is the signal that actually distinguishes them. Fall back to NODE_ENV when
+// VERCEL_ENV is absent (local builds, or system env vars not exposed) so the
+// canonical host stays enforced rather than silently switching off.
+const vercelEnv = process.env.VERCEL_ENV
+const IS_PRODUCTION_DEPLOYMENT = vercelEnv
+  ? vercelEnv === 'production'
+  : process.env.NODE_ENV === 'production'
+
 export function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
   // Only enforce host rules in production — in dev this would bounce LAN
   // previews (e.g. a phone hitting the machine's IP) to production.
-  if (process.env.NODE_ENV === 'production') {
+  if (IS_PRODUCTION_DEPLOYMENT) {
     // The skills subdomain is the catalog front door: serve /skills at its root,
     // and send every other path to the canonical apex so the app isn't duplicated
     // under the subdomain.
