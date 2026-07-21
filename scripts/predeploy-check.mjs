@@ -17,7 +17,18 @@ import { execFileSync } from 'node:child_process'
 const BRANCH = 'main'
 
 function git(...args) {
-  return execFileSync('git', args, { encoding: 'utf8' }).trim()
+  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
+}
+
+// Same, but returns null instead of throwing. Used for lookups that can
+// legitimately fail (e.g. a remote-tracking ref that is missing or corrupt) so
+// the guard reports the problem rather than dumping a stack trace.
+function gitOrNull(...args) {
+  try {
+    return git(...args)
+  } catch {
+    return null
+  }
 }
 
 function fail(title, detail, remedy) {
@@ -61,7 +72,15 @@ try {
 }
 
 const head = git('rev-parse', 'HEAD')
-const remote = git('rev-parse', `origin/${BRANCH}`)
+const remote = gitOrNull('rev-parse', `origin/${BRANCH}`)
+if (!remote) {
+  fail(
+    `Cannot resolve origin/${BRANCH}.`,
+    '      The remote-tracking ref is missing or corrupt, so there is nothing\n' +
+      '      to compare the deploy against.',
+    `Repair it with: rm -f .git/refs/remotes/origin/${BRANCH} && git fetch origin --prune`,
+  )
+}
 if (head !== remote) {
   const ahead = git('rev-list', '--count', `origin/${BRANCH}..HEAD`)
   const behind = git('rev-list', '--count', `HEAD..origin/${BRANCH}`)
