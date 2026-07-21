@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth/session'
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
 import { hashWallet } from '@/lib/analytics/hashWallet'
-import type { DeploymentRecord, NetworkId } from '@/types'
+import { deploymentsFromEvents } from '@/lib/history/fromEvents'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,30 +44,9 @@ export async function GET() {
     return NextResponse.json({ signedIn: true, configured: true, deployments: [] })
   }
 
-  // Map events → DeploymentRecord, keeping only rows with an address and deduping by
-  // address (rows are newest-first, so the first occurrence is the latest deploy).
-  const seen = new Set<string>()
-  const deployments: DeploymentRecord[] = []
-  for (const row of data ?? []) {
-    const address = typeof row.contract_address === 'string' ? row.contract_address : ''
-    if (!address) continue
-    const key = address.toLowerCase()
-    if (seen.has(key)) continue
-    seen.add(key)
-
-    const meta = (row.metadata ?? {}) as Record<string, unknown>
-    const contractName =
-      typeof meta.contract_name === 'string' && meta.contract_name ? meta.contract_name : 'Contract'
-    const txHash = typeof meta.transaction_hash === 'string' ? meta.transaction_hash : undefined
-
-    deployments.push({
-      address,
-      contractName,
-      network: (row.network as NetworkId) ?? 'testnet-bradbury',
-      deployedAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-      txHash,
-    })
-  }
+  // Rows are ordered newest-first above, which deploymentsFromEvents relies on to
+  // keep the latest record when an address appears more than once.
+  const deployments = deploymentsFromEvents(data ?? [])
 
   return NextResponse.json({ signedIn: true, configured: true, deployments })
 }

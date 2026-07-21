@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
 import { hashWallet } from '@/lib/analytics/hashWallet'
+import { computeBuilderActivity } from '@/lib/builders/activity'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,73 +75,56 @@ export async function GET(_req: NextRequest, { params }: { params: { wallet: str
   // derive them at read time from analytics_events — the same hashed-wallet join
   // used for deploy history. Always accurate, no backfill or migration needed.
   // Requires ANALYTICS_SALT (else wallet_hash is never stored); without it these
-  // degrade to what the contracts table alone can show.
-  const deployedLower = new Set<string>()
-  for (const c of contracts) deployedLower.add(c.address.toLowerCase())
-
-  let forksMade = 0
-  let forksReceived = 0
-
+  // degrade to what the contracts table alone can show. The aggregation itself
+  // lives in lib/builders/activity.ts so it can be tested without a database.
   const walletHash = hashWallet(wallet)
-  if (walletHash) {
-    // Deploys by this wallet (fuller than the verified-only contracts list above).
-    const { data: deployEvents } = await sb
-      .from('analytics_events')
-      .select('contract_address')
-      .eq('event_name', 'deployment_succeeded')
-      .eq('wallet_hash', walletHash)
-      .limit(EVENT_SCAN_LIMIT)
-    for (const e of deployEvents ?? []) {
-      if (typeof e.contract_address === 'string' && e.contract_address) {
-        deployedLower.add(e.contract_address.toLowerCase())
-      }
-    }
 
-    // Forks this wallet made — distinct source contracts it forked. wallet_hash is an
-    // exact (case-safe) match, so this is a direct filter.
-    const { data: madeEvents } = await sb
-      .from('analytics_events')
-      .select('contract_address')
-      .eq('event_name', 'contract_forked')
-      .eq('wallet_hash', walletHash)
-      .limit(EVENT_SCAN_LIMIT)
-    const madeSet = new Set<string>()
-    for (const e of madeEvents ?? []) {
-      if (typeof e.contract_address === 'string' && e.contract_address) {
-        madeSet.add(e.contract_address.toLowerCase())
-      }
-    }
-    forksMade = madeSet.size
+  const [deployEvents, forksMadeEvents, forkEvents] = walletHash
+    ? await Promise.all([
+        // Deploys by this wallet (fuller than the verified-only contracts list above).
+        sb
+          .from('analytics_events')
+          .select('contract_address')
+          .eq('event_name', 'deployment_succeeded')
+          .eq('wallet_hash', walletHash)
+          .limit(EVENT_SCAN_LIMIT)
+          .then((r) => r.data ?? []),
+        // Forks this wallet made. wallet_hash is an exact (case-safe) match.
+        sb
+          .from('analytics_events')
+          .select('contract_address')
+          .eq('event_name', 'contract_forked')
+          .eq('wallet_hash', walletHash)
+          .limit(EVENT_SCAN_LIMIT)
+          .then((r) => r.data ?? []),
+        // Recent forks by anyone; narrowed to this wallet's contracts in JS, since
+        // addresses are mixed-case across capture paths and `.in` is case-sensitive.
+        sb
+          .from('analytics_events')
+          .select('contract_address, wallet_hash')
+          .eq('event_name', 'contract_forked')
+          .order('created_at', { ascending: false })
+          .limit(EVENT_SCAN_LIMIT)
+          .then((r) => r.data ?? []),
+      ])
+    : [[], [], []]
 
-    // Forks received — others forking contracts this wallet deployed. Addresses can be
-    // mixed-case across capture paths, so match in JS on lowercased addresses rather
-    // than a case-sensitive DB `.in`. Deduped by (forker, contract); self-forks excluded.
-    if (deployedLower.size) {
-      const { data: recvEvents } = await sb
-        .from('analytics_events')
-        .select('contract_address, wallet_hash')
-        .eq('event_name', 'contract_forked')
-        .order('created_at', { ascending: false })
-        .limit(EVENT_SCAN_LIMIT)
-      const recvSet = new Set<string>()
-      for (const e of recvEvents ?? []) {
-        const addr = typeof e.contract_address === 'string' ? e.contract_address.toLowerCase() : ''
-        if (!addr || !deployedLower.has(addr)) continue
-        if (e.wallet_hash && e.wallet_hash === walletHash) continue // exclude self-forks
-        recvSet.add(`${e.wallet_hash ?? 'anon'}:${addr}`)
-      }
-      forksReceived = recvSet.size
-    }
-  }
+  const activity = computeBuilderActivity({
+    attributedAddresses: contracts.map((c) => c.address),
+    deployEvents,
+    forksMadeEvents,
+    forkEvents,
+    walletHash,
+  })
 
   const response: BuilderProfileResponse = {
     wallet,
     displayName: prof.display_name ?? null,
     reputation: prof.reputation_score ?? 0,
     contractsVerified: prof.contracts_verified ?? 0,
-    contractsDeployed: deployedLower.size,
-    forksReceived,
-    forksMade,
+    contractsDeployed: activity.contractsDeployed,
+    forksReceived: activity.forksReceived,
+    forksMade: activity.forksMade,
     createdAt: prof.created_at ?? null,
     contracts,
   }
