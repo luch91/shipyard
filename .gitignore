@@ -34,3 +34,10 @@ supabase/.temp/
 # Internal planning (not shipped)
 ROADMAP.md
 CLARKE-QUEST-PRD.md
+
+.env*
+!.env.local.example
+
+# Generated launch-video artifacts (/brag)
+brag-output/
+brag-output-*/

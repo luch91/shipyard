@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "predeploy": "node scripts/predeploy-check.mjs",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
