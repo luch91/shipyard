@@ -30,6 +30,7 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 - **Network health indicators** — real-time RPC status per network (online / slow / offline)
 - **Live deploy logs** — streaming terminal output during deployment
 - **Public contract registry** — a DB-backed registry of contracts deployed through Shipyard (and external contracts that claim attribution), with verification badges and method previews
+- **Recent activity feed** — a live feed of recent deploys, verifications and forks beneath the registry; only contracts already listed in the registry ever appear, and a builder is named only where the registry has proven ownership
 - **Contract verification** — prove a contract's source by signing in with your wallet (SIWE); Shipyard matches your published source against the on-chain code and attributes the deploy to your address
 - **Wallet sign-in (SIWE)** — passwordless authentication via "Sign-In with Ethereum"; a session is held in an httpOnly cookie, no passwords or keys involved
 - **Interact page** — call read and write methods on any deployed contract
@@ -179,6 +180,7 @@ shipyard/
 │   └── api/
 │       ├── generate/         # AI contract generation (OpenRouter proxy)
 │       ├── registry/         # DB-backed registry (+ record/ to log deploys)
+│       ├── activity/         # Public recent-activity feed (registry-gated)
 │       ├── verify/           # Contract source verification (SIWE + on-chain match)
 │       ├── auth/             # SIWE nonce / verify / session / logout
 │       ├── analytics/        # First-party event ingestion
@@ -187,6 +189,7 @@ shipyard/
 │   ├── deploy/               # ContractUploader, NetworkSelector, DeployForm, DeployLogs, FaucetWidget, ContractDiff
 │   ├── interact/             # ContractPanel, ReadMethods, WriteMethods
 │   ├── registry/             # RegistryClient
+│   ├── activity/             # ActivityFeed (recent deploys/verifications/forks)
 │   ├── auth/                 # SignInButton (SIWE)
 │   ├── layout/               # Header, Sidebar, BottomNav, MobileTopBar, Logo
 │   ├── providers/            # Client-side provider wrappers (Web3, analytics)
@@ -210,6 +213,9 @@ shipyard/
 │   ├── ai/
 │   │   ├── models.ts         # OpenRouter model definitions
 │   │   └── systemPrompt.ts   # GenLayer contract generation prompt
+│   ├── activity/
+│   │   ├── feed.ts           # Activity feed aggregation (registry gate + dedupe)
+│   │   └── timeAgo.ts        # Compact relative timestamps
 │   ├── supabase/server.ts    # Service-role Supabase client (server-side)
 │   ├── auth/session.ts       # SIWE session JWT (sign/verify)
 │   ├── redis.ts              # Upstash Redis client (graceful if unconfigured)
@@ -265,9 +271,10 @@ class MyContract:
 
 - Shipyard **never has access to your private keys**. Transactions are signed inside your connected wallet (MetaMask, Rabby, etc.) via WalletConnect/RainbowKit — Shipyard only receives the resulting signature, never the key.
 - Only the wallet **address** is persisted to localStorage for UX continuity. First-party analytics hash wallet addresses with a server-side salt (`ANALYTICS_SALT`) before storage — raw wallets are never stored.
+- The **public activity feed** (`/api/activity`) is derived from analytics events but cannot deanonymise anyone. Analytics rows hold only a salted wallet hash, so the feed never reads a wallet from them — attribution comes solely from the registry's `deployer_wallet`, which is set after SIWE ownership verification and is already public on `/builders`. An event is shown only when its contract is already listed in the registry, so the feed cannot surface anything that was not already discoverable.
 - **Authentication** uses SIWE ("Sign-In with Ethereum"): a wallet signature establishes a session held in a signed, httpOnly JWT cookie (`SESSION_SECRET`). Sign-in nonces are single-use and stored in Redis to prevent replay.
 - **Database access** is server-side only via the Supabase `service_role` key; Row-Level Security is enabled deny-by-default on every table, and the service key is never exposed to the client.
-- All server-side API routes (`/api/generate`, `/api/registry`, `/api/verify`, `/api/auth/*`, `/api/analytics`, `/api/cron/*`) run with secrets that live only on the server. The Vercel Cron route is protected by a bearer secret (`CRON_SECRET`); the OpenRouter key (`OPENROUTER_API_KEY`) never reaches the client.
+- All server-side API routes (`/api/generate`, `/api/registry`, `/api/activity`, `/api/verify`, `/api/auth/*`, `/api/analytics`, `/api/cron/*`) run with secrets that live only on the server. The Vercel Cron route is protected by a bearer secret (`CRON_SECRET`); the OpenRouter key (`OPENROUTER_API_KEY`) never reaches the client.
 - The canonical-host redirect in `middleware.ts` runs in production only, so local/LAN previews are never bounced to the live domain.
 
 ---
