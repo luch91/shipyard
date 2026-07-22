@@ -71,9 +71,12 @@ export function indexRegistry(contracts: RegistryContract[]) {
 }
 
 /**
- * Builds the feed from events ordered NEWEST-FIRST. One entry per
- * (kind, contract): a contract can appear once as deployed and again as verified,
- * but a repeated event of the same kind collapses to its most recent occurrence.
+ * Builds the feed from events ordered NEWEST-FIRST. One entry per (kind, project):
+ * a contract can appear once as deployed and again as verified, but a repeat of
+ * the same kind collapses to its most recent occurrence.
+ *
+ * "Project" means address OR contract name — see the dedupe block below for why
+ * address alone produced a feed of one project repeated 25 times.
  */
 export function buildActivityFeed(
   events: ActivityEventRow[],
@@ -104,13 +107,28 @@ export function buildActivityFeed(
       registry.byAddress.get(address.toLowerCase())
     if (!match) continue
 
-    const dedupeKey = `${kind}:${address.toLowerCase()}`
-    if (seen.has(dedupeKey)) continue
-    seen.add(dedupeKey)
-
     const meta = (event.metadata ?? {}) as Record<string, unknown>
     const contractName =
       typeof meta.contract_name === 'string' && meta.contract_name ? meta.contract_name : null
+
+    // Collapse on address OR name, not either alone.
+    //
+    // Address alone is too weak: builders iterate, and every redeploy mints a NEW
+    // address, so one afternoon of iteration filled the whole feed (measured
+    // against production data: 25 rows, 2 distinct projects).
+    //
+    // Name alone is too strong in one direction and too weak in the other: events
+    // that record no name — contract_verified is one — would all collapse into a
+    // single entry, while a redeploy that renamed the contract would slip through
+    // as a duplicate.
+    //
+    // Keys are namespaced (a:/n:) so a contract whose name happens to look like an
+    // address cannot collide with a real one.
+    const addressKey = `${kind}:a:${address.toLowerCase()}`
+    const nameKey = contractName ? `${kind}:n:${contractName.toLowerCase()}` : null
+    if (seen.has(addressKey) || (nameKey && seen.has(nameKey))) continue
+    seen.add(addressKey)
+    if (nameKey) seen.add(nameKey)
 
     items.push({
       kind,

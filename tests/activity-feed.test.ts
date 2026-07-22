@@ -98,11 +98,55 @@ describe('deduping', () => {
   })
 
   it('treats differently-cased addresses as the same contract', () => {
+    // Distinct names, so the collapse can only be coming from the address key.
     const items = buildActivityFeed(
-      [ev({ contract_address: '0xABCDEF' }), ev({ contract_address: '0xabcdef' })],
+      [
+        ev({ contract_address: '0xABCDEF', metadata: { contract_name: 'One' } }),
+        ev({ contract_address: '0xabcdef', metadata: { contract_name: 'Two' } }),
+      ],
       registry,
     )
     expect(items).toHaveLength(1)
+  })
+
+  it('collapses redeploys of one project even though each mints a new address', () => {
+    // The reason this feed deduped badly in production: iterating on a contract
+    // produces a fresh address every time, so an address-only key let a single
+    // project fill the entire feed.
+    const items = buildActivityFeed(
+      [
+        ev({ contract_address: '0xAbCdEf', metadata: { contract_name: 'Same' } }),
+        ev({ contract_address: '0x111', network: 'studionet', metadata: { contract_name: 'Same' } }),
+      ],
+      registry,
+    )
+    expect(items).toHaveLength(1)
+  })
+
+  it('keeps unnamed events separate instead of collapsing them together', () => {
+    // contract_verified records no contract_name. If a missing name were treated
+    // as a shared key, every unnamed event would collapse into a single row.
+    const items = buildActivityFeed(
+      [
+        ev({ event_name: 'contract_verified', contract_address: '0xAbCdEf', metadata: null }),
+        ev({ event_name: 'contract_verified', contract_address: '0x111', network: 'studionet', metadata: null }),
+      ],
+      registry,
+    )
+    expect(items).toHaveLength(2)
+  })
+
+  it('does not let a name collide with another contract address', () => {
+    // Keys are namespaced (a:/n:); without that, the first event's NAME would
+    // match the second event's ADDRESS and wrongly suppress it.
+    const items = buildActivityFeed(
+      [
+        ev({ contract_address: '0xAbCdEf', metadata: { contract_name: '0x111' } }),
+        ev({ contract_address: '0x111', network: 'studionet', metadata: { contract_name: 'Other' } }),
+      ],
+      registry,
+    )
+    expect(items).toHaveLength(2)
   })
 })
 
@@ -142,8 +186,15 @@ describe('output shape', () => {
       network: 'studionet',
       deployer_wallet: null,
     }))
+    // Distinct names, or the address-OR-name dedupe would collapse them into one
+    // and this would stop testing the limit at all.
     const manyEvents = many.map((c, i) =>
-      ev({ contract_address: c.address, network: 'studionet', created_at: `2026-07-21T0${i}:00:00.000Z` }),
+      ev({
+        contract_address: c.address,
+        network: 'studionet',
+        metadata: { contract_name: `Oracle${i}` },
+        created_at: `2026-07-21T0${i}:00:00.000Z`,
+      }),
     )
     const limited = buildActivityFeed([...manyEvents].reverse(), many, 3)
     expect(limited).toHaveLength(3)
