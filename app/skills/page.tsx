@@ -3,12 +3,14 @@ import { Rocket, Search, Zap, ShieldCheck, Network, Compass } from 'lucide-react
 import GithubIcon from '@/components/ui/GithubIcon'
 import Card from '@/components/ui/Card'
 import CopyButton from '@/components/ui/CopyButton'
+import { createPageMetadata } from '@/lib/metadata/site'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Skills',
   description:
     'Shipyard Skills. A Claude Code plugin that teaches agents the full Shipyard journey: deploy, discover, interact with, and verify GenLayer Intelligent Contracts straight from your CLI.',
-}
+  path: '/skills',
+})
 
 const REPO_URL = 'https://github.com/luch91/shipyard'
 

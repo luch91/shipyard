@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/metadata/site'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Terms of Service',
   description:
     'Terms of Service for Shipyard — the browser-based deployment platform for GenLayer Intelligent Contracts.',
-}
+  path: '/terms',
+})
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

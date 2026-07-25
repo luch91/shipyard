@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/metadata/site'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Privacy Policy',
   description:
     'Privacy Policy for Shipyard — what data is and is not collected by the browser-based GenLayer deployment platform.',
-}
+  path: '/privacy',
+})
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

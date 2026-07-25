@@ -1,4 +1,6 @@
+import type { Metadata } from 'next'
 import { getAllNetworks, NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
+import { createPageMetadata, DEFAULT_DESCRIPTION, DEFAULT_TITLE } from '@/lib/metadata/site'
 import HeroSection from '@/components/landing/HeroSection'
 import StatsBar from '@/components/landing/StatsBar'
 import HowItWorksSection from '@/components/landing/HowItWorksSection'
@@ -7,6 +9,13 @@ import NetworkStatus from '@/components/landing/NetworkStatus'
 import TerminalSpotlight from '@/components/landing/TerminalSpotlight'
 import CTABanner from '@/components/landing/CTABanner'
 import Footer from '@/components/landing/Footer'
+
+export const metadata: Metadata = createPageMetadata({
+  title: DEFAULT_TITLE,
+  description: DEFAULT_DESCRIPTION,
+  path: '/',
+  absoluteTitle: true,
+})
 
 export default function HomePage() {
   // Four available targets plus Clarke (coming soon) make up the five-network

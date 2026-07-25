@@ -1,0 +1,20 @@
+/* TEAM */
+
+Project: Shipyard
+Maintainer: Luchi
+Contributors: https://github.com/luch91/shipyard/graphs/contributors
+Source: https://github.com/luch91/shipyard
+
+/* SITE */
+
+Canonical: https://genshipyard.com
+Purpose: Browser-based GenLayer Intelligent Contract deployment and management
+Language: English
+Standards: HTML, JSON-LD, Open Graph, Twitter Cards, RSS 2.0, RFC 9116
+Framework: Next.js, TypeScript, Tailwind CSS
+Last metadata review: 2026-07-25
+
+/* THANKS */
+
+GenLayer: https://genlayer.com
+GenLayer documentation: https://docs.genlayer.com

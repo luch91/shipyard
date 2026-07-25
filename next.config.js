@@ -59,6 +59,22 @@ const nextConfig = {
           { key: 'Content-Security-Policy-Report-Only', value: cspReportOnly },
         ],
       },
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, nosnippet' },
+        ],
+      },
+      {
+        source: '/.well-known/security.txt',
+        headers: [
+          { key: 'Content-Type', value: 'text/plain; charset=utf-8' },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
     ]
   },
 }

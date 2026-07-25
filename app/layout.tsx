@@ -12,28 +12,50 @@ import { AnalyticsPageView } from '@/components/providers/AnalyticsPageView'
 import { SidebarProvider } from '@/components/providers/SidebarContext'
 import { Web3Provider } from '@/components/providers/Web3Provider'
 import { SiweAuthProvider } from '@/components/providers/SiweAuthProvider'
+import {
+  absoluteUrl,
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+  SITE_NAME,
+  SITE_URL,
+  SOCIAL_IMAGE_PATH,
+} from '@/lib/metadata/site'
 import '@rainbow-me/rainbowkit/styles.css'
 import './globals.css'
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://genshipyard.com'
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'Organization',
-      name: 'Shipyard',
+      '@id': `${SITE_URL}/#organization`,
+      name: SITE_NAME,
       url: SITE_URL,
+      logo: absoluteUrl('/icon.svg'),
+      sameAs: ['https://github.com/luch91/shipyard'],
       description: 'Browser-based deployment and management platform for GenLayer Intelligent Contracts',
     },
     {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      description: DEFAULT_DESCRIPTION,
+      publisher: { '@id': `${SITE_URL}/#organization` },
+      inLanguage: 'en',
+    },
+    {
       '@type': 'WebApplication',
+      '@id': `${SITE_URL}/#webapplication`,
       name: 'Shipyard',
       url: SITE_URL,
       description:
         'No-CLI deployment platform for GenLayer Intelligent Contracts. Deploy to Bradbury, Asimov, Studionet, or Localnet directly from the browser, with Clarke coming soon.',
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Any',
+      browserRequirements: 'Requires a modern browser; wallet features require a compatible browser wallet.',
+      isPartOf: { '@id': `${SITE_URL}/#website` },
+      publisher: { '@id': `${SITE_URL}/#organization` },
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       featureList: [
         'Browser-based Intelligent Contract deployment',
@@ -51,18 +73,68 @@ const jsonLd = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
   title: {
-    default: 'Shipyard — Deploy Intelligent Contracts on GenLayer',
+    default: DEFAULT_TITLE,
     template: '%s — Shipyard',
   },
-  description:
-    'Browser-based deployment platform for GenLayer Intelligent Contracts. Deploy to Bradbury, Asimov, Studionet, or Localnet in under 60 seconds, with Clarke coming soon — no CLI required.',
+  description: DEFAULT_DESCRIPTION,
   keywords: ['GenLayer', 'Intelligent Contracts', 'smart contract deployment', 'Web3', 'Python smart contracts', 'testnet deployment'],
+  authors: [{ name: 'Shipyard contributors', url: 'https://github.com/luch91/shipyard/graphs/contributors' }],
+  creator: 'Shipyard contributors',
+  publisher: SITE_NAME,
+  category: 'Developer tools',
+  referrer: 'strict-origin-when-cross-origin',
+  formatDetection: {
+    telephone: false,
+    address: false,
+    email: false,
+  },
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: ['/icon.svg'],
+  },
+  alternates: {
+    types: {
+      'application/rss+xml': absoluteUrl('/feed.xml'),
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   openGraph: {
-    title: 'Shipyard — Deploy Intelligent Contracts on GenLayer',
-    description: 'Deploy Python-based GenLayer Intelligent Contracts from your browser. No CLI required for hosted networks.',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    url: SITE_URL,
     type: 'website',
-    siteName: 'Shipyard',
+    siteName: SITE_NAME,
+    locale: 'en_US',
+    images: [
+      {
+        url: absoluteUrl(SOCIAL_IMAGE_PATH),
+        width: 1200,
+        height: 630,
+        alt: 'Shipyard — GenLayer Intelligent Contract deployment',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [absoluteUrl(SOCIAL_IMAGE_PATH)],
   },
 }
 

@@ -1,0 +1,17 @@
+# Shipyard AI Discovery Note
+
+Status: Informational and non-standard
+Canonical-Site: https://genshipyard.com/
+LLM-Guide: https://genshipyard.com/llms.txt
+Robots-Policy: https://genshipyard.com/robots.txt
+Sitemap: https://genshipyard.com/sitemap.xml
+Source: https://github.com/luch91/shipyard
+
+Shipyard welcomes discovery and citation of its public, crawlable pages by
+search engines and AI retrieval systems. Access permissions are governed by
+robots.txt. This file does not override robots.txt, HTTP headers, page-level
+robots metadata, the Terms of Service, or applicable law.
+
+No license or training permission is granted by this file. ai.txt is not an
+adopted web standard; it is provided only as a graceful machine-readable pointer
+to authoritative Shipyard resources.

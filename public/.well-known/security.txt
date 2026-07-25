@@ -1,0 +1,5 @@
+Contact: https://github.com/luch91/shipyard/security/advisories/new
+Expires: 2027-07-01T00:00:00Z
+Preferred-Languages: en
+Canonical: https://genshipyard.com/.well-known/security.txt
+Policy: https://github.com/luch91/shipyard/security/policy
