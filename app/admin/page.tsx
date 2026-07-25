@@ -615,9 +615,9 @@ function FamilyLegend() {
 
 function ControlGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-1.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
       <span className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: INK3 }}>{label}</span>
-      <div className="flex items-center gap-1.5">{children}</div>
+      <div className="flex max-w-full flex-wrap items-center gap-1.5">{children}</div>
     </div>
   )
 }
@@ -752,7 +752,7 @@ function HeroChart({ data, color }: { data: { date: string; value: number }[]; c
   const line = data.map((d, i) => `${x(i).toFixed(1)},${y(d.value).toFixed(1)}`).join(' ')
   const area = `${padL},${padT + ih} ${line} ${padL + iw},${padT + ih}`
 
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const onPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     if (w === 0) return
     const rect = e.currentTarget.getBoundingClientRect()
     const mx = e.clientX - rect.left
@@ -761,7 +761,14 @@ function HeroChart({ data, color }: { data: { date: string; value: number }[]; c
   }
 
   return (
-    <div ref={ref} className="relative w-full" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+    <div
+      ref={ref}
+      className="relative w-full"
+      onPointerDown={onPointer}
+      onPointerMove={onPointer}
+      onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHover(null) }}
+      onPointerCancel={() => setHover(null)}
+    >
       {w > 0 && (
         <svg width={w} height={h} className="block">
           {[0.5, 1].map((f) => (
@@ -821,7 +828,7 @@ function UsageChart({ days, nets }: { days: Rollup[]; nets: string[] }) {
   const barW = Math.max(2, colW * 0.66)
   const baseline = padT + ih
 
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const onPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     if (w === 0 || colW === 0) return
     const rect = e.currentTarget.getBoundingClientRect()
     const i = Math.floor((e.clientX - rect.left - padL) / colW)
@@ -830,7 +837,14 @@ function UsageChart({ days, nets }: { days: Rollup[]; nets: string[] }) {
 
   return (
     <div>
-      <div ref={ref} className="relative w-full" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      <div
+        ref={ref}
+        className="relative w-full"
+        onPointerDown={onPointer}
+        onPointerMove={onPointer}
+        onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHover(null) }}
+        onPointerCancel={() => setHover(null)}
+      >
         {w > 0 && (
           <svg width={w} height={h} className="block">
             {days.map((r, i) => {
