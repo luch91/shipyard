@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { GET as getFeed } from '../app/feed.xml/route'
 import manifest from '../app/manifest'
 import sitemap from '../app/sitemap'
+import { BLOG_POSTS } from '../lib/blog/posts'
 
 function readPublicFile(path: string): string {
   return readFileSync(resolve(process.cwd(), 'public', path), 'utf8')
@@ -88,6 +89,7 @@ describe('security and syndication resources', () => {
       '<atom:link href="https://genshipyard.com/feed.xml" rel="self" type="application/rss+xml" />',
     )
     expect(guids.length).toBeGreaterThan(0)
+    expect(guids).toHaveLength(BLOG_POSTS.length + 3)
     expect(new Set(guids).size).toBe(guids.length)
   })
 })

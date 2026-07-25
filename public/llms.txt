@@ -18,6 +18,7 @@ Localnet. Testnet Clarke is represented as coming soon and is not selectable.
 - [Builders](https://genshipyard.com/builders): Builder reputation and verified deployment profiles.
 - [Network comparison](https://genshipyard.com/compare): Compare contract deployment across supported testnets.
 - [Shipyard skills](https://genshipyard.com/skills): Agent-oriented deployment, discovery, interaction, and verification workflows.
+- [GenLayer Knowledge Center](https://genshipyard.com/blog): Technical guides about Intelligent Contracts, AI consensus, machine trust, and agent-ready applications.
 - [Source repository](https://github.com/luch91/shipyard): Application source and developer documentation.
 
 ## Product facts

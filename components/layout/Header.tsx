@@ -23,6 +23,12 @@ export default function Header() {
         {/* Landing nav */}
         <nav className="flex items-center gap-4">
           {/* Docs + GitHub hidden on small screens — CTA is the priority */}
+          <Link
+            href="/blog"
+            className="hidden text-sm font-medium text-neutral-400 transition-colors hover:text-white sm:block"
+          >
+            Blog
+          </Link>
           <a
             href="https://docs.genlayer.com"
             target="_blank"

@@ -1,6 +1,7 @@
+import { BLOG_POSTS } from '@/lib/blog/posts'
 import { SITE_NAME, SITE_URL } from '@/lib/metadata/site'
 
-const items = [
+const productItems = [
   {
     title: 'Professional landing and deploy experience',
     description:
@@ -27,6 +28,16 @@ const items = [
   },
 ] as const
 
+const articleItems = BLOG_POSTS.map((post) => ({
+  title: post.title,
+  description: post.description,
+  link: `${SITE_URL}/blog/${post.slug}`,
+  guid: `${SITE_URL}/blog/${post.slug}`,
+  published: new Date(`${post.publishedAt}T00:00:00Z`).toUTCString(),
+}))
+
+const items = [...articleItems, ...productItems]
+
 function escapeXml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
@@ -52,8 +63,8 @@ export function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${SITE_NAME} Product Updates</title>
-    <description>Product and platform updates from Shipyard.</description>
+    <title>${SITE_NAME} Guides and Product Updates</title>
+    <description>Technical GenLayer guides and product updates from Shipyard.</description>
     <link>${SITE_URL}</link>
     <language>en</language>
     <lastBuildDate>${items[0].published}</lastBuildDate>

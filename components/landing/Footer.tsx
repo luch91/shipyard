@@ -13,6 +13,9 @@ export default function Footer() {
 
         {/* Links */}
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-neutral-500">
+          <Link href="/blog" className="transition-colors hover:text-neutral-300">
+            Blog
+          </Link>
           <Link href="/terms" className="transition-colors hover:text-neutral-300">
             Terms
           </Link>
