@@ -2,7 +2,7 @@
 
 **Browser-based deployment platform for GenLayer Intelligent Contracts.**
 
-Deploy Python Intelligent Contracts to any GenLayer network in under 60 seconds — no CLI, no terminal, no friction.
+Deploy Python Intelligent Contracts to supported GenLayer environments in under 60 seconds — no CLI, no terminal, no friction.
 
 ![GenLayer](https://img.shields.io/badge/GenLayer-Bradbury-34d399?style=flat-square)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)
@@ -26,13 +26,14 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 - **AI contract generation** — describe your contract in plain English, get a deployable Python Intelligent Contract in seconds
 - **One-click deploy** — upload, paste, or generate a `.py` contract, fill in params, deploy
 - **Pre-filled constructor params** — templates and AI-generated contracts arrive with example values ready to deploy
-- **4 networks** — Testnet Bradbury, Testnet Asimov, Studionet, Localnet
+- **5 network environments** — Testnet Bradbury, Testnet Asimov, Studionet, and Localnet are selectable; Testnet Clarke is coming soon
 - **Network health indicators** — real-time RPC status per network (online / slow / offline)
 - **Live deploy logs** — streaming terminal output during deployment
 - **Public contract registry** — a DB-backed registry of contracts deployed through Shipyard (and external contracts that claim attribution), with verification badges and method previews
 - **Recent activity feed** — a live feed of recent deploys, verifications and forks beneath the registry; only contracts already listed in the registry ever appear, and a builder is named only where the registry has proven ownership
 - **Contract verification** — prove a contract's source by signing in with your wallet (SIWE); Shipyard matches your published source against the on-chain code and attributes the deploy to your address
-- **Wallet sign-in (SIWE)** — passwordless authentication via "Sign-In with Ethereum"; a session is held in an httpOnly cookie, no passwords or keys involved
+- **Wallet sign-in (SIWE)** — passwordless public authentication via "Sign-In with Ethereum"; a session is held in an httpOnly cookie
+- **Protected admin console** — dedicated password login with rate limiting and an optional wallet-allowlist fallback
 - **Interact page** — call read and write methods on any deployed contract
 - **One-click fork** — load any deployed contract's source into the editor from the interact page, ready to modify and redeploy
 - **Shareable deploy links** — network-aware interact URLs (`/interact/0xabc?network=bradbury`) that pre-select the correct network when shared
@@ -44,7 +45,7 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 - **Faucet widget** — one-click testnet token request when your wallet balance is 0
 - **Responsive navigation** — collapsible desktop sidebar plus a mobile bottom-nav and a top back-bar for deep pages
 - **First-party analytics** — privacy-preserving event tracking; wallet addresses are SHA-256 hashed before storage (raw wallets are never stored), with daily rollups via Vercel Cron
-- **Dark theme** — Fira Code + Syne fonts, emerald accent, no light mode
+- **Dark theme** — Inter interface text, Syne brand display, Fira Code for code, and an emerald accent
 
 ---
 
@@ -60,13 +61,14 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 | GenLayer SDK | genlayer-js |
 | Wallet | wagmi v2 + RainbowKit |
 | Database | Supabase (PostgreSQL, RLS) |
-| Auth | SIWE (viem + jose, httpOnly JWT cookie) |
+| Public auth | SIWE (viem + jose, httpOnly JWT cookie) |
+| Admin auth | Password session with optional wallet-allowlist fallback |
 | Cache / nonce store | Upstash Redis |
 | Scheduled jobs | Vercel Cron |
 | Animations | Framer Motion |
 | Toasts | react-hot-toast |
 | Icons | lucide-react |
-| Fonts | Fira Code + Syne |
+| Fonts | Inter + Syne + Fira Code |
 | URL compression | lz-string |
 | Analytics | First-party (Supabase) |
 
@@ -76,7 +78,7 @@ Shipyard is the "Thirdweb for GenLayer" — a web app that removes the deploymen
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - A browser wallet (MetaMask, Rabby, etc.) connected to a GenLayer network
 - Testnet GEN tokens — get them from the [faucet](https://testnet-faucet.genlayer.foundation)
 
@@ -105,6 +107,8 @@ The app works without any env vars for basic deployment — every backend featur
 | `ANALYTICS_SALT` | Hashing salt for first-party analytics | With Supabase |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Caching, rate-limiting, SIWE nonce store | Optional |
 | `CRON_SECRET` | Protects the Vercel Cron rollup route | With Cron |
+| `ADMIN_PASSWORD` | Password login for the `/admin` console | For password admin access |
+| `ADMIN_WALLETS` | Optional comma-separated wallet allowlist for admin fallback access | Optional |
 | `SUPABASE_DB_URL` | Running migrations only (`supabase db push`) | Migrations |
 
 See `.env.local.example` for full notes on each. All server secrets are server-side only (no `NEXT_PUBLIC_` prefix) — the `service_role` key bypasses RLS and must never reach the client.
@@ -129,6 +133,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | Testnet Asimov | Live | Validator onboarding testnet. Open for general deployment. |
 | Studionet | Live | Browser-based Studio environment. Free gas, instant finalization. |
 | Localnet | Local | Docker-based local node. Requires GenLayer stack running on `localhost:4000`. |
+| Testnet Clarke | Coming soon | Listed in the product but not selectable until network details are available. |
 
 > **Bradbury note:** LLM consensus takes 30–120 seconds. Shipyard polls for up to 3 minutes before surfacing the contract address.
 
@@ -167,62 +172,22 @@ Shipyard ships with 20 ready-to-deploy templates:
 
 ```
 shipyard/
-├── middleware.ts             # Canonical-host redirect (production only)
-├── app/
-│   ├── page.tsx              # Landing page
-│   ├── deploy/page.tsx       # Deploy flow
-│   ├── templates/page.tsx    # Template gallery
-│   ├── interact/[address]/   # Contract interaction
-│   ├── compare/page.tsx      # Network comparison
-│   ├── registry/page.tsx     # Public contract registry
-│   ├── history/page.tsx      # Deployment history
-│   ├── terms/, privacy/      # Legal pages
-│   └── api/
-│       ├── generate/         # AI contract generation (OpenRouter proxy)
-│       ├── registry/         # DB-backed registry (+ record/ to log deploys)
-│       ├── activity/         # Public recent-activity feed (registry-gated)
-│       ├── verify/           # Contract source verification (SIWE + on-chain match)
-│       ├── auth/             # SIWE nonce / verify / session / logout
-│       ├── analytics/        # First-party event ingestion
-│       └── cron/             # Vercel Cron analytics rollup
-├── components/
-│   ├── deploy/               # ContractUploader, NetworkSelector, DeployForm, DeployLogs, FaucetWidget, ContractDiff
-│   ├── interact/             # ContractPanel, ReadMethods, WriteMethods
-│   ├── registry/             # RegistryClient
-│   ├── activity/             # ActivityFeed (recent deploys/verifications/forks)
-│   ├── auth/                 # SignInButton (SIWE)
-│   ├── layout/               # Header, Sidebar, BottomNav, MobileTopBar, Logo
-│   ├── providers/            # Client-side provider wrappers (Web3, analytics)
-│   └── ui/                   # Button, Card, Spinner, CopyButton, NetworkBadge
-├── hooks/
-│   ├── useDeployStore.ts     # Zustand global state
-│   ├── useDeploy.ts          # Deploy orchestration
-│   ├── useWallet.ts          # Wallet connect/disconnect/balance
-│   ├── useNetworkHealth.ts   # Real-time RPC health per network
-│   ├── useContract.ts        # Read/write method hooks
-│   ├── useSiweAuth.ts        # SIWE sign-in flow + session state
-│   └── useNavNew.ts          # "New" nav badge dismissal (localStorage)
-├── lib/
-│   ├── genlayer/
-│   │   ├── networks.ts       # Network configs and colors
-│   │   ├── client.ts         # genlayer-js client factory + on-chain helpers
-│   │   ├── parser.ts         # Python contract parser and validator
-│   │   ├── deploy.ts         # Deploy orchestration
-│   │   ├── templates.ts      # 20 contract templates
-│   │   └── runners.ts        # Pinned GenLayer runner hashes
-│   ├── ai/
-│   │   ├── models.ts         # OpenRouter model definitions
-│   │   └── systemPrompt.ts   # GenLayer contract generation prompt
-│   ├── activity/
-│   │   ├── feed.ts           # Activity feed aggregation (registry gate + dedupe)
-│   │   └── timeAgo.ts        # Compact relative timestamps
-│   ├── supabase/server.ts    # Service-role Supabase client (server-side)
-│   ├── auth/session.ts       # SIWE session JWT (sign/verify)
-│   ├── redis.ts              # Upstash Redis client (graceful if unconfigured)
-│   ├── analytics.ts          # First-party analytics event wrapper
-│   └── diff.ts               # Line-level diff utility
-├── supabase/migrations/      # SQL schema (RLS deny-by-default)
-└── types/index.ts            # Shared TypeScript types
+├── .github/                  # CI, Dependabot, ownership, and contribution templates
+├── app/                      # Next.js pages, layouts, and API route handlers
+├── components/               # Feature, layout, provider, and shared UI components
+├── docs/archive/             # Superseded product documents retained for context
+├── hooks/                    # Client state and GenLayer interaction hooks
+├── lib/                      # Auth, analytics, data, and GenLayer domain logic
+├── plugins/                  # Shipyard Codex plugin package
+├── public/                   # Static assets
+├── scripts/                  # Deployment and repository safety checks
+├── skills/                   # Shipyard agent skills
+├── supabase/migrations/      # Versioned database schema
+├── tests/                    # Vitest regression and integration coverage
+├── types/                    # Shared TypeScript types
+├── CONTRIBUTING.md           # Workflow and commit convention
+├── CHANGELOG.md              # Release-facing change history
+└── middleware.ts             # Canonical-host and skills-subdomain routing
 ```
 
 ---
@@ -272,7 +237,8 @@ class MyContract:
 - Shipyard **never has access to your private keys**. Transactions are signed inside your connected wallet (MetaMask, Rabby, etc.) via WalletConnect/RainbowKit — Shipyard only receives the resulting signature, never the key.
 - Only the wallet **address** is persisted to localStorage for UX continuity. First-party analytics hash wallet addresses with a server-side salt (`ANALYTICS_SALT`) before storage — raw wallets are never stored.
 - The **public activity feed** (`/api/activity`) is derived from analytics events but cannot deanonymise anyone. Analytics rows hold only a salted wallet hash, so the feed never reads a wallet from them — attribution comes solely from the registry's `deployer_wallet`, which is set after SIWE ownership verification and is already public on `/builders`. An event is shown only when its contract is already listed in the registry, so the feed cannot surface anything that was not already discoverable.
-- **Authentication** uses SIWE ("Sign-In with Ethereum"): a wallet signature establishes a session held in a signed, httpOnly JWT cookie (`SESSION_SECRET`). Sign-in nonces are single-use and stored in Redis to prevent replay.
+- **Public authentication** uses SIWE ("Sign-In with Ethereum"): a wallet signature establishes a session held in a signed, httpOnly JWT cookie (`SESSION_SECRET`). Sign-in nonces are single-use and stored in Redis to prevent replay.
+- **Admin authentication** uses a separate, rate-limited password endpoint and dedicated httpOnly cookie. `ADMIN_PASSWORD` remains server-only; an `ADMIN_WALLETS` allowlist can provide fallback access.
 - **Database access** is server-side only via the Supabase `service_role` key; Row-Level Security is enabled deny-by-default on every table, and the service key is never exposed to the client.
 - All server-side API routes (`/api/generate`, `/api/registry`, `/api/activity`, `/api/verify`, `/api/auth/*`, `/api/analytics`, `/api/cron/*`) run with secrets that live only on the server. The Vercel Cron route is protected by a bearer secret (`CRON_SECRET`); the OpenRouter key (`OPENROUTER_API_KEY`) never reaches the client.
 - The canonical-host redirect in `middleware.ts` runs in production only, so local/LAN previews are never bounced to the live domain.
@@ -291,7 +257,7 @@ class MyContract:
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 

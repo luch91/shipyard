@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a reproducible problem in Shipyard
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping improve Shipyard.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest reliable sequence of steps.
+      placeholder: |
+        1. Open …
+        2. Select …
+        3. Observe …
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, device, network target, and relevant version.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting evidence
+      description: Add logs or screenshots with credentials and wallet-sensitive data removed.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed passwords, private keys, tokens, and other secrets.
+          required: true

@@ -1,10 +1,13 @@
 # Shipyard Landing Page — Product Requirements Document
 
+> Archived product document from June 2026. It describes the landing page before
+> the July 2026 professional UI refresh and is retained for historical context.
+
 **Product:** Shipyard — Browser-based GenLayer Intelligent Contract Deployment  
 **URL:** https://genshipyard.com  
 **Scope:** Landing page upgrade — `app/page.tsx` only  
 **Version:** 1.0  
-**Status:** Ready for Build  
+**Status:** Implemented (archived)
 **Date:** June 2026
 
 ---

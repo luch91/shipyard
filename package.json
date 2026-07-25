@@ -1,7 +1,20 @@
 {
-  "name": "gendeploy",
+  "name": "shipyard",
   "version": "0.1.0",
   "private": true,
+  "description": "Browser-based deployment and management platform for GenLayer Intelligent Contracts.",
+  "homepage": "https://genshipyard.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luch91/shipyard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luch91/shipyard/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
