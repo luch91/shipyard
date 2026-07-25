@@ -3,6 +3,7 @@
 import { ExternalLink } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { Network, NetworkId } from '@/types'
+import { UPCOMING_NETWORKS } from '@/lib/genlayer/networks'
 import type { NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
 
 interface Props {
@@ -32,7 +33,7 @@ export default function NetworkStatus({ networks, colorClasses }: Props) {
         initial={initial}
         whileInView="visible"
         viewport={{ once: true, margin: '-80px' }}
-        className="mb-8 text-center"
+        className="mb-10 max-w-2xl"
       >
         <motion.span
           variants={fadeUp}
@@ -42,7 +43,7 @@ export default function NetworkStatus({ networks, colorClasses }: Props) {
         </motion.span>
         <motion.h2
           variants={fadeUp}
-          className="mt-3 font-[Syne] font-bold text-white"
+          className="mt-3 font-semibold tracking-[-0.03em] text-white"
           style={{ fontSize: 'clamp(24px, 3vw, 36px)' }}
         >
           Five networks. One platform.
@@ -63,35 +64,42 @@ export default function NetworkStatus({ networks, colorClasses }: Props) {
             <motion.div
               key={network.id}
               variants={fadeUp}
-              className="relative rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-emerald-400/[0.04] px-4 py-4 shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5"
+              className="relative rounded-lg border border-white/[0.08] bg-[#101411] px-4 py-4 transition-colors duration-200 hover:border-white/[0.14]"
             >
               <div className="mb-2 flex items-center gap-2">
                 <span
                   className={`h-2 w-2 rounded-full ${colors.dot} ${network.isLive ? 'animate-pulse' : 'opacity-40'}`}
                 />
-                <span className={`font-mono text-xs font-bold ${colors.text}`}>
+                <span className={`text-sm font-semibold ${colors.text}`}>
                   {network.name}
                 </span>
               </div>
-              <p className="text-xs font-semibold leading-relaxed text-neutral-400">{network.description}</p>
+              <p className="text-xs leading-5 text-neutral-400">{network.description}</p>
+              {!network.isLive && (
+                <span className="mt-3 inline-flex rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[10px] font-medium text-neutral-400">
+                  Local environment
+                </span>
+              )}
             </motion.div>
           )
         })}
 
-        {/* Testnet Clarke — coming soon */}
-        <motion.div
-          variants={fadeUp}
-          className="relative rounded-xl border border-white/[0.05] bg-gradient-to-br from-white/[0.02] to-sky-400/[0.02] px-4 py-4 shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl opacity-70"
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-sky-400 opacity-40" />
-            <span className="font-mono text-xs font-bold text-sky-400">Testnet Clarke</span>
-          </div>
-          <p className="mb-2.5 text-xs font-semibold leading-relaxed text-neutral-400">Next-generation GenLayer testnet</p>
-          <span className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold bg-sky-500/10 text-sky-400">
-            Coming Soon
-          </span>
-        </motion.div>
+        {UPCOMING_NETWORKS.map((network) => (
+          <motion.div
+            key={network.id}
+            variants={fadeUp}
+            className="relative rounded-lg border border-sky-500/15 bg-[#101411] px-4 py-4 opacity-75"
+          >
+            <div className="mb-2 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-sky-400 opacity-40" />
+              <span className="text-sm font-semibold text-sky-400">{network.name}</span>
+            </div>
+            <p className="mb-2.5 text-xs font-semibold leading-relaxed text-neutral-400">{network.description}</p>
+            <span className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold bg-sky-500/10 text-sky-400">
+              Coming Soon
+            </span>
+          </motion.div>
+        ))}
       </motion.div>
 
       {/* Faucet links */}

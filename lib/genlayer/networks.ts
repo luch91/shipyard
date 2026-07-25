@@ -39,6 +39,20 @@ export const NETWORKS: Record<NetworkId, Network> = {
   },
 }
 
+// Networks announced by GenLayer but not selectable until RPC and chain details
+// are available. Keeping this here prevents the landing page and deploy selector
+// from drifting on names, descriptions, or the total network count.
+export const UPCOMING_NETWORKS = [
+  {
+    id: 'testnet-clarke',
+    name: 'Testnet Clarke',
+    description: 'Next-generation GenLayer testnet',
+  },
+] as const
+
+export const TOTAL_NETWORK_COUNT =
+  Object.keys(NETWORKS).length + UPCOMING_NETWORKS.length
+
 // ─── Network Colors ───────────────────────────────────────────────────────────
 // emerald = Bradbury, amber = Asimov, purple = Studionet, gray = Localnet
 

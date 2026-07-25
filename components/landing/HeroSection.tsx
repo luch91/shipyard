@@ -1,30 +1,79 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronDown } from 'lucide-react'
+import { ArrowRight, Check, FileCode2, Radio, ShieldCheck } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
-import FloatingCode from './FloatingCode'
-import TerminalTypewriter from './TerminalTypewriter'
-
-function ShipyardHeroLogo() {
-  return (
-    <div className="relative mx-auto mb-6 h-16 w-16">
-      <div className="absolute inset-0 rounded-full bg-emerald-400/20 blur-xl" />
-      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-emerald-400/[0.04] backdrop-blur-xl">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icon.svg" alt="Shipyard" width={32} height={32} className="logo-pulse" />
-      </div>
-    </div>
-  )
-}
 
 const itemVariants = {
-  hidden:  { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 16 },
   visible: (delay: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: 'easeOut', delay },
+    transition: { duration: 0.45, ease: 'easeOut', delay },
   }),
+}
+
+function ProductPreview() {
+  return (
+    <div className="overflow-hidden rounded-xl border border-white/[0.1] bg-[#101411] shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+      <div className="flex items-center justify-between border-b border-white/[0.08] px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md border border-emerald-500/20 bg-emerald-500/[0.08]">
+            <FileCode2 size={14} className="text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-neutral-200">PredictionMarket.py</p>
+            <p className="font-mono text-[10px] text-neutral-600">Intelligent Contract</p>
+          </div>
+        </div>
+        <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/[0.07] px-2 py-1 text-[10px] font-medium text-emerald-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          Ready
+        </span>
+      </div>
+
+      <div className="grid md:grid-cols-[1.2fr_0.8fr]">
+        <div className="border-b border-white/[0.08] p-4 md:border-b-0 md:border-r">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-xs font-medium text-neutral-400">Contract source</span>
+            <span className="font-mono text-[10px] text-neutral-600">Python</span>
+          </div>
+          <div className="rounded-md border border-white/[0.07] bg-[#080b09] p-3 font-mono text-[11px] leading-5">
+            <p><span className="text-violet-400">class</span> <span className="text-emerald-300">PredictionMarket</span>(gl.Contract):</p>
+            <p className="pl-4 text-neutral-500">question: <span className="text-amber-300">str</span></p>
+            <p className="pl-4 text-neutral-500">resolution_url: <span className="text-amber-300">str</span></p>
+            <p className="mt-2 pl-4 text-neutral-400">def resolve(self):</p>
+            <p className="pl-8 text-neutral-600">return gl.exec_prompt(...)</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 p-4">
+          <div>
+            <p className="mb-2 text-xs font-medium text-neutral-400">Deployment target</p>
+            <div className="flex items-center justify-between rounded-md border border-emerald-500/25 bg-emerald-500/[0.06] px-3 py-2.5">
+              <span className="flex items-center gap-2 text-xs font-medium text-neutral-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                Testnet Bradbury
+              </span>
+              <Radio size={13} className="text-emerald-400" />
+            </div>
+          </div>
+          <div className="space-y-2 rounded-md border border-white/[0.07] bg-[#0c100d] p-3">
+            {['Source validated', 'Parameters configured', 'Wallet connected'].map((label) => (
+              <div key={label} className="flex items-center gap-2 text-[11px] text-neutral-400">
+                <Check size={12} className="text-emerald-400" />
+                {label}
+              </div>
+            ))}
+          </div>
+          <div className="mt-auto flex items-center justify-center gap-2 rounded-md bg-emerald-400 px-3 py-2.5 text-xs font-semibold text-[#07100b]">
+            <ShieldCheck size={14} />
+            Deploy Contract
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function HeroSection() {
@@ -32,121 +81,93 @@ export default function HeroSection() {
   const initial = shouldReduce ? 'visible' : 'hidden'
 
   return (
-    <section
-      className="relative flex flex-col items-center justify-center overflow-hidden text-center"
-      style={{ minHeight: 'calc(100vh - 56px)' }}
-    >
-      {/* Aurora background */}
-      <div className="aurora-bg absolute inset-0" aria-hidden />
-
-      {/* Floating code fragments */}
-      <FloatingCode />
-
-      {/* Emerald ambient glow */}
+    <section className="relative overflow-hidden border-b border-white/[0.06]">
       <div
-        className="pointer-events-none absolute left-0 right-0 top-0"
+        className="pointer-events-none absolute inset-0"
         style={{
-          height: '600px',
           background:
-            'radial-gradient(ellipse 800px 600px at 50% 0%, rgba(52,211,153,0.08) 0%, transparent 70%)',
+            'radial-gradient(ellipse 65% 70% at 76% 35%, rgba(52,211,153,0.08) 0%, transparent 70%)',
         }}
         aria-hidden
       />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center px-4">
-        {/* Pre-badge */}
-        <motion.div
-          custom={0}
-          variants={itemVariants}
-          initial={initial}
-          animate="visible"
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-4 py-1.5"
-        >
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-          <span className="font-mono text-xs text-emerald-400">GenLayer Testnet Live</span>
-        </motion.div>
-
-        {/* Logo */}
-        <motion.div custom={0.1} variants={itemVariants} initial={initial} animate="visible">
-          <ShipyardHeroLogo />
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
-          custom={0.2}
-          variants={itemVariants}
-          initial={initial}
-          animate="visible"
-          className="mb-4 font-[Syne] font-extrabold leading-[1.1] tracking-[-0.02em] text-white"
-          style={{ fontSize: 'clamp(32px, 5vw, 56px)' }}
-        >
-          Deploy Intelligent Contracts
-          <br />
-          <span className="text-emerald-400">in 60 seconds.</span>
-        </motion.h1>
-
-        {/* Subheadline */}
-        <motion.p
-          custom={0.3}
-          variants={itemVariants}
-          initial={initial}
-          animate="visible"
-          className="mx-auto mb-8 max-w-lg text-base leading-relaxed text-neutral-400"
-        >
-          The no-CLI deployment platform for GenLayer Intelligent Contracts.
-          Upload Python, configure params, and deploy straight from the browser.
-        </motion.p>
-
-        {/* CTA */}
-        <motion.div
-          custom={0.4}
-          variants={itemVariants}
-          initial={initial}
-          animate="visible"
-          className="mb-12 flex flex-wrap items-center justify-center gap-3"
-        >
-          <Link
-            href="/templates"
-            className="rounded-full border border-white/10 px-6 py-3 font-mono font-semibold text-neutral-300 backdrop-blur-sm transition-colors hover:border-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-neutral-500/40"
+      <div className="relative grid min-h-[calc(100vh-64px)] items-center gap-14 py-16 lg:grid-cols-[0.88fr_1.12fr] lg:py-20">
+        <div>
+          <motion.div
+            custom={0}
+            variants={itemVariants}
+            initial={initial}
+            animate="visible"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-1.5"
           >
-            Browse Templates
-          </Link>
-        </motion.div>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="font-mono text-[11px] text-emerald-300">GenLayer Testnet Live</span>
+          </motion.div>
 
-        {/* Terminal mockup */}
+          <motion.h1
+            custom={0.1}
+            variants={itemVariants}
+            initial={initial}
+            animate="visible"
+            className="max-w-2xl text-4xl font-semibold leading-[1.04] tracking-[-0.045em] text-white sm:text-5xl lg:text-[62px]"
+          >
+            Deploy Intelligent Contracts{' '}
+            <span className="text-emerald-400">in 60 seconds.</span>
+          </motion.h1>
+
+          <motion.p
+            custom={0.2}
+            variants={itemVariants}
+            initial={initial}
+            animate="visible"
+            className="mt-6 max-w-xl text-base leading-7 text-neutral-400 sm:text-lg"
+          >
+            The no-CLI deployment platform for GenLayer Intelligent Contracts.
+            Upload Python, configure parameters, and deploy directly from your browser.
+          </motion.p>
+
+          <motion.div
+            custom={0.3}
+            variants={itemVariants}
+            initial={initial}
+            animate="visible"
+            className="mt-8 flex flex-col gap-3 sm:flex-row"
+          >
+            <Link
+              href="/deploy"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-emerald-400 px-5 text-sm font-semibold text-[#07100b] transition-colors hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            >
+              Start Deploying
+              <ArrowRight size={15} />
+            </Link>
+            <Link
+              href="/templates"
+              className="inline-flex min-h-12 items-center justify-center rounded-md border border-white/[0.12] bg-white/[0.02] px-5 text-sm font-semibold text-neutral-200 transition-colors hover:border-white/[0.2] hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-neutral-500/40"
+            >
+              Browse Templates
+            </Link>
+          </motion.div>
+
+          <motion.p
+            custom={0.4}
+            variants={itemVariants}
+            initial={initial}
+            animate="visible"
+            className="mt-5 text-xs text-neutral-600"
+          >
+            Five network environments · Browser-based deployment
+          </motion.p>
+        </div>
+
         <motion.div
-          custom={0.6}
+          custom={0.25}
           variants={itemVariants}
           initial={initial}
           animate="visible"
-          className="w-full max-w-[460px]"
+          className="min-w-0"
         >
-          <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-emerald-400/[0.04] shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl">
-            <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500/70" />
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/70" />
-              <span className="ml-2 font-mono text-xs text-neutral-500">shipyard</span>
-            </div>
-            <div className="p-4">
-              <TerminalTypewriter />
-            </div>
-          </div>
+          <ProductPreview />
         </motion.div>
-
-        {/* Scroll chevron */}
-        <motion.a
-          href="#how-it-works"
-          custom={0.8}
-          variants={itemVariants}
-          initial={initial}
-          animate="visible"
-          className="mt-10 flex flex-col items-center text-neutral-600 transition-colors hover:text-neutral-400"
-          aria-label="Scroll to How It Works"
-        >
-          <ChevronDown size={20} className="chevron-bounce" />
-        </motion.a>
       </div>
     </section>
   )

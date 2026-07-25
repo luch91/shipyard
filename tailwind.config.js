@@ -11,7 +11,8 @@ module.exports = {
     extend: {
       fontFamily: {
         mono: ['Fira Code', 'ui-monospace', 'monospace'],
-        sans: ['Syne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Syne', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },

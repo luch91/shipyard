@@ -100,12 +100,12 @@ export default function DeployForm() {
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="step-badge">03</span>
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+          <span className="text-sm font-semibold text-neutral-100">
             Configure & Deploy
           </span>
         </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-8 text-center">
-          <p className="text-sm text-neutral-600">
+        <div className="rounded-lg border border-white/[0.08] bg-[#0c100d] px-4 py-10 text-center">
+          <p className="text-sm leading-6 text-neutral-400">
             Upload a valid contract to see constructor parameters.
           </p>
         </div>
@@ -117,7 +117,10 @@ export default function DeployForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="font-mono text-sm font-semibold text-neutral-300">3. Configure & Deploy</h2>
+      <div className="flex items-center gap-2">
+        <span className="step-badge">03</span>
+        <h2 className="text-sm font-semibold text-neutral-100">Configure & Deploy</h2>
+      </div>
 
       {/* Constructor params */}
       {constructorParams.length > 0 && (

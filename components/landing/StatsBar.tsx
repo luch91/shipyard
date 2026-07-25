@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { motion, useMotionValue, useTransform, animate, useInView, useReducedMotion } from 'framer-motion'
+import { TOTAL_NETWORK_COUNT } from '@/lib/genlayer/networks'
 
 const fadeUp = {
   hidden:  { opacity: 0, y: 20 },
@@ -32,7 +33,7 @@ function StatCounter({ target }: CounterProps) {
   }, [inView, target, count, shouldReduce])
 
   return (
-    <motion.span ref={ref} className="font-[Syne] text-4xl font-extrabold text-emerald-400">
+    <motion.span ref={ref} className="text-3xl font-semibold tracking-[-0.03em] text-emerald-400">
       {rounded}
     </motion.span>
   )
@@ -40,7 +41,7 @@ function StatCounter({ target }: CounterProps) {
 
 const STATS = [
   { target: 20, label: 'Templates' },
-  { target: 4,  label: 'Networks' },
+  { target: TOTAL_NETWORK_COUNT, label: 'Networks' },
   { target: 0,  label: 'CLI Required' },
 ]
 
@@ -53,16 +54,18 @@ export default function StatsBar() {
       initial={shouldReduce ? 'visible' : 'hidden'}
       whileInView="visible"
       viewport={{ once: true, margin: '-80px' }}
-      className="flex flex-wrap justify-center gap-6 py-8"
+      className="grid grid-cols-1 border-b border-white/[0.07] sm:grid-cols-3"
     >
-      {STATS.map((stat) => (
+      {STATS.map((stat, index) => (
         <motion.div
           key={stat.label}
           variants={fadeUp}
-          className="flex flex-col items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.03] px-8 py-4 backdrop-blur-sm"
+          className={`flex items-center justify-center gap-3 px-6 py-6 sm:py-7 ${
+            index > 0 ? 'border-t border-white/[0.07] sm:border-l sm:border-t-0' : ''
+          }`}
         >
           <StatCounter target={stat.target} />
-          <span className="font-mono text-xs uppercase tracking-widest text-neutral-500">
+          <span className="text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">
             {stat.label}
           </span>
         </motion.div>

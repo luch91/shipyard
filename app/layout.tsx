@@ -31,15 +31,15 @@ const jsonLd = {
       name: 'Shipyard',
       url: SITE_URL,
       description:
-        'No-CLI deployment platform for GenLayer Intelligent Contracts. Upload Python-based smart contracts, configure parameters, and deploy to Bradbury, Asimov, Studionet, or Localnet testnets directly from the browser.',
+        'No-CLI deployment platform for GenLayer Intelligent Contracts. Deploy to Bradbury, Asimov, Studionet, or Localnet directly from the browser, with Clarke coming soon.',
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Any',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       featureList: [
         'Browser-based Intelligent Contract deployment',
-        'No CLI or local environment required',
+        'No CLI required for hosted networks',
         'Contract template library',
-        'Multi-network support (Bradbury, Asimov, Studionet, Localnet)',
+        'Multi-network support (Bradbury, Asimov, Studionet, Localnet, with Clarke coming soon)',
         'Network comparison deployment',
         'On-chain contract registry',
         'Contract interaction interface',
@@ -56,11 +56,11 @@ export const metadata: Metadata = {
     template: '%s — Shipyard',
   },
   description:
-    'Browser-based deployment platform for GenLayer Intelligent Contracts. Deploy Python smart contracts to Bradbury, Asimov, Studionet, or Localnet testnets in under 60 seconds — no CLI required.',
+    'Browser-based deployment platform for GenLayer Intelligent Contracts. Deploy to Bradbury, Asimov, Studionet, or Localnet in under 60 seconds, with Clarke coming soon — no CLI required.',
   keywords: ['GenLayer', 'Intelligent Contracts', 'smart contract deployment', 'Web3', 'Python smart contracts', 'testnet deployment'],
   openGraph: {
     title: 'Shipyard — Deploy Intelligent Contracts on GenLayer',
-    description: 'Deploy Python-based GenLayer Intelligent Contracts from your browser. No CLI, no local tooling required.',
+    description: 'Deploy Python-based GenLayer Intelligent Contracts from your browser. No CLI required for hosted networks.',
     type: 'website',
     siteName: 'Shipyard',
   },

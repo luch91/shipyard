@@ -82,7 +82,7 @@ export default function DeployLogs() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-mono text-sm font-semibold text-neutral-300">Deploy Log</h2>
+        <h2 className="text-sm font-semibold text-neutral-100">Deploy Log</h2>
         {!isEmpty && (
           <button
             type="button"
@@ -95,7 +95,7 @@ export default function DeployLogs() {
       </div>
 
       {/* Terminal window */}
-      <div className="flex flex-col rounded-lg border border-neutral-800 bg-neutral-950 overflow-hidden">
+      <div className="flex flex-col overflow-hidden rounded-lg border border-white/[0.09] bg-[#080b09]">
         {/* Terminal header */}
         <div className="flex items-center gap-1.5 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
           <span className="h-3 w-3 rounded-full bg-red-500/60" />
@@ -105,9 +105,9 @@ export default function DeployLogs() {
         </div>
 
         {/* Log stream */}
-        <div className="h-64 overflow-y-auto p-3">
+        <div className="h-72 overflow-y-auto p-3 xl:h-[34rem]">
           {isEmpty ? (
-            <p className="font-mono text-xs text-neutral-700">
+            <p className="font-mono text-xs text-neutral-500">
               Waiting for deploy command…
             </p>
           ) : (

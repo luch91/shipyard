@@ -1,7 +1,6 @@
 'use client'
 
-import { getLiveNetworks } from '@/lib/genlayer/networks'
-import { NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
+import { getAllNetworks, NETWORK_COLOR_CLASSES, UPCOMING_NETWORKS } from '@/lib/genlayer/networks'
 import { useDeployStore } from '@/hooks/useDeployStore'
 import { useNetworkHealth } from '@/hooks/useNetworkHealth'
 import type { HealthStatus } from '@/hooks/useNetworkHealth'
@@ -28,16 +27,16 @@ function HealthIcon({ status, networkId }: { status: HealthStatus; networkId: Ne
 
 export default function NetworkSelector() {
   const { selectedNetwork, setSelectedNetwork } = useDeployStore()
-  // Live testnets only (excludes localnet, isLive:false). Testnet Clarke is shown
-  // as a "Soon" teaser below, replacing localnet as the fourth network card.
-  const networks = getLiveNetworks()
+  // Four selectable targets, including Localnet, plus Clarke as a non-selectable
+  // teaser until GenLayer publishes its RPC and chain details.
+  const networks = getAllNetworks()
   const health = useNetworkHealth()
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <span className="step-badge">02</span>
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+        <span className="text-sm font-semibold text-neutral-100">
           Network
         </span>
       </div>
@@ -62,7 +61,7 @@ export default function NetworkSelector() {
                 })
               }}
               className={clsx(
-                'relative flex flex-col items-start gap-1 rounded-lg border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
+                'relative min-h-24 flex flex-col items-start gap-1.5 rounded-lg border px-3 py-3 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
                 isSelected
                   ? [colors.border, colors.bg, 'ring-1', colors.border]
                   : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1] hover:bg-white/[0.04]'
@@ -81,7 +80,7 @@ export default function NetworkSelector() {
                 />
                 <span
                   className={clsx(
-                    'font-mono text-xs font-medium',
+                    'text-sm font-medium',
                     isSelected ? colors.text : 'text-neutral-400'
                   )}
                 >
@@ -90,7 +89,7 @@ export default function NetworkSelector() {
                 <HealthIcon status={health[network.id as NetworkId]} networkId={network.id as NetworkId} />
               </span>
 
-              <p className="text-[11px] leading-tight text-neutral-600 line-clamp-2">
+              <p className="pr-8 text-xs leading-5 text-neutral-500 line-clamp-2">
                 {network.description}
               </p>
 
@@ -103,24 +102,24 @@ export default function NetworkSelector() {
           )
         })}
 
-        {/* Testnet Clarke — coming soon. Teaser only: not a deployable network
-            until GenLayer publishes its RPC/chainId and genlayer-js exports the
-            chain. Standalone card, intentionally not part of the NETWORKS map. */}
-        <div
-          className="relative flex cursor-default flex-col items-start gap-1 rounded-lg border border-sky-500/20 bg-sky-500/[0.04] px-4 py-3 text-left opacity-70"
-          aria-disabled="true"
-        >
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full bg-sky-400 opacity-40" />
-            <span className="font-mono text-xs font-medium text-sky-400">Testnet Clarke</span>
-          </span>
-          <p className="text-[11px] leading-tight text-neutral-600 line-clamp-2">
-            Next-generation GenLayer testnet
-          </p>
-          <span className="absolute right-2 top-2 rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-sky-400">
-            Soon
-          </span>
-        </div>
+        {UPCOMING_NETWORKS.map((network) => (
+          <div
+            key={network.id}
+            className="relative flex min-h-24 cursor-default flex-col items-start gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/[0.04] px-3 py-3 text-left opacity-70"
+            aria-disabled="true"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full bg-sky-400 opacity-40" />
+              <span className="text-sm font-medium text-sky-400">{network.name}</span>
+            </span>
+            <p className="pr-8 text-xs leading-5 text-neutral-500 line-clamp-2">
+              {network.description}
+            </p>
+            <span className="absolute right-2 top-2 rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-sky-400">
+              Soon
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )

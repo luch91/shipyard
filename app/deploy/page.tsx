@@ -12,6 +12,8 @@ import DeployForm from '@/components/deploy/DeployForm'
 import DeployLogs from '@/components/deploy/DeployLogs'
 import FaucetWidget from '@/components/deploy/FaucetWidget'
 import ContractDiff from '@/components/deploy/ContractDiff'
+import { getNetwork, NETWORK_COLOR_CLASSES } from '@/lib/genlayer/networks'
+import type { NetworkId } from '@/types'
 
 // Isolated so useSearchParams is inside a Suspense boundary (Next.js 14 requirement)
 function SourceLoader() {
@@ -40,8 +42,10 @@ function SourceLoader() {
 }
 
 export default function DeployPage() {
-  const { contractSource, parsedContract } = useDeployStore()
+  const { contractSource, parsedContract, selectedNetwork } = useDeployStore()
   const [prevSource, setPrevSource] = useState<string | null>(null)
+  const network = getNetwork(selectedNetwork)
+  const networkColors = NETWORK_COLOR_CLASSES[selectedNetwork as NetworkId]
 
   // Check if this contract was previously deployed and source differs
   useEffect(() => {
@@ -71,55 +75,57 @@ export default function DeployPage() {
   }, [contractSource, parsedContract?.className])
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="min-h-screen bg-[#080b09]">
       <Suspense fallback={null}>
         <SourceLoader />
       </Suspense>
 
-      <div className="mb-8">
-        <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-emerald-400 mb-2">
-          Deploy
-        </p>
-        <h1 className="font-sans text-2xl font-bold text-white mb-1">
-          Deploy a Contract
-        </h1>
-        <p className="text-sm text-neutral-500">
-          Upload your Intelligent Contract, choose a network, and deploy in seconds.
-        </p>
-      </div>
-
-      {/* Faucet widget — shows when wallet is connected with 0 balance on testnet */}
-      <div className="mb-4">
-        <FaucetWidget />
-      </div>
-
-      {/* Diff view — shows when re-deploying a changed contract */}
-      {prevSource && parsedContract && (
-        <div className="mb-4">
-          <ContractDiff
-            oldSource={prevSource}
-            newSource={contractSource}
-            contractName={parsedContract.className}
-          />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="step-badge">01</span>
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
-              Upload Contract
-            </span>
+      <div className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mb-7 flex flex-col gap-4 border-b border-white/[0.07] pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-[-0.02em] text-white sm:text-3xl">
+              Deploy a Contract
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
+              Upload your Intelligent Contract, choose a network, and deploy in seconds.
+            </p>
           </div>
-          <ContractUploader />
+          <div className="flex w-fit items-center gap-2 rounded-md border border-white/[0.08] bg-[#101411] px-3 py-2">
+            <span className={`h-2 w-2 rounded-full ${networkColors.dot}`} />
+            <span className="text-xs text-neutral-500">Current target</span>
+            <span className="text-sm font-medium text-neutral-200">{network.name}</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-6 lg:col-span-1">
-          <NetworkSelector />
-          <DeployForm />
+
+        {/* Faucet widget — shows when wallet is connected with 0 balance on testnet */}
+        <div className="mb-5">
+          <FaucetWidget />
         </div>
-        <div className="lg:col-span-1">
-          <DeployLogs />
+
+        {/* Diff view — shows when re-deploying a changed contract */}
+        {prevSource && parsedContract && (
+          <div className="mb-5">
+            <ContractDiff
+              oldSource={prevSource}
+              newSource={contractSource}
+              contractName={parsedContract.className}
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+          <section className="app-panel p-4 sm:p-5 xl:col-span-5">
+            <ContractUploader />
+          </section>
+          <section className="app-panel flex flex-col gap-6 p-4 sm:p-5 xl:col-span-4">
+            <NetworkSelector />
+            <div className="border-t border-white/[0.07] pt-6">
+              <DeployForm />
+            </div>
+          </section>
+          <section className="app-panel p-4 sm:p-5 xl:col-span-3">
+            <DeployLogs />
+          </section>
         </div>
       </div>
     </div>

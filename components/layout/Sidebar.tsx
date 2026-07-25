@@ -34,13 +34,13 @@ function NavItem({
         title={label}
         onClick={onSelect}
         className={clsx(
-          'relative flex h-8 w-8 items-center justify-center rounded-lg transition-all',
+          'relative flex h-9 w-9 items-center justify-center rounded-md transition-colors',
           active
-            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-            : 'text-neutral-600 hover:bg-white/[0.04] hover:text-neutral-300'
+            ? 'bg-emerald-500/10 text-emerald-400'
+            : 'text-neutral-500 hover:bg-white/[0.04] hover:text-neutral-200'
         )}
       >
-        <Icon size={14} />
+        <Icon size={16} />
         {badge !== undefined && badge > 0 && (
           <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30 font-mono text-[8px] text-emerald-400">
             {badge > 9 ? '9+' : badge}
@@ -58,15 +58,15 @@ function NavItem({
       href={href}
       onClick={onSelect}
       className={clsx(
-        'flex items-center gap-2.5 rounded-lg px-2.5 py-[7px]',
-        'text-xs font-medium transition-all duration-150',
+        'relative flex min-h-10 items-center gap-3 rounded-md px-3 py-2',
+        'text-sm font-medium transition-colors duration-150',
         active
-          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-          : 'text-neutral-500 border border-transparent hover:bg-white/[0.03] hover:text-neutral-300'
+          ? 'bg-emerald-500/[0.09] text-emerald-300 before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-emerald-400'
+          : 'text-neutral-400 hover:bg-white/[0.03] hover:text-neutral-100'
       )}
     >
-      <Icon size={13} className="shrink-0" />
-      <span className="font-mono flex-1 min-w-0">{label}</span>
+      <Icon size={16} className="shrink-0" />
+      <span className="min-w-0 flex-1">{label}</span>
       {soon && (
         <span className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
           Soon
@@ -127,78 +127,82 @@ export default function Sidebar() {
         // Desktop only — collapsible. Mobile navigation is handled by BottomNav.
         'relative hidden shrink-0 flex-col border-r border-white/[0.06] sidebar-glow',
         'lg:flex lg:transition-all lg:duration-200',
-        open ? 'lg:w-52' : 'lg:w-12'
+        open ? 'lg:w-60' : 'lg:w-16'
       )}
     >
-      {/* Desktop collapse toggle */}
-      <button
-        type="button"
-        onClick={() => setOpen(p => !p)}
-        className="absolute -right-3 top-5 z-10 hidden lg:flex h-6 w-6 items-center
-                   justify-center rounded-full border border-white/[0.08]
-                   bg-neutral-900 text-neutral-500 hover:text-neutral-300
-                   focus:outline-none transition-colors"
-        aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
-      >
-        {open ? <ChevronLeft size={11} /> : <ChevronRight size={11} />}
-      </button>
-
       {/* ── EXPANDED ───────────────────────────────────────────────────────── */}
       {open && (
         <div className="flex flex-1 flex-col overflow-hidden">
 
-          {/* Logo — wordmark only (no mark), matching the header font */}
-          <div className="px-3 py-4 border-b border-white/[0.05]">
-            <Logo showMark={false} className="text-lg" />
+          <div className="flex h-16 items-center border-b border-white/[0.06] px-4">
+            <Logo className="text-lg" />
           </div>
 
-          {/* Nav links */}
-          <nav className="flex flex-col gap-1 px-2 py-3 border-b border-white/[0.05]">
-            <p className="px-2 mb-1 font-mono text-[9px] tracking-[0.2em]
-                          uppercase text-neutral-700">
-              Navigate
-            </p>
-            {NAV_ITEMS.map(({ href, label, Icon, soon, isNew }) => (
-              <NavItem
-                key={href}
-                href={href}
-                label={label}
-                Icon={Icon}
-                active={isActive(href)}
-                soon={soon}
-                badge={href === '/history' ? count : undefined}
-                collapsed={false}
-                showNew={showNew(href, isNew)}
-                onSelect={() => markSeen(href)}
-              />
+          <nav className="flex flex-col gap-6 px-3 py-5">
+            {(['Build', 'Explore'] as const).map((group) => (
+              <div key={group}>
+                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-600">
+                  {group}
+                </p>
+                <div className="flex flex-col gap-1">
+                  {NAV_ITEMS.filter((item) => item.group === group).map(({ href, label, Icon, soon, isNew }) => (
+                    <NavItem
+                      key={href}
+                      href={href}
+                      label={label}
+                      Icon={Icon}
+                      active={isActive(href)}
+                      soon={soon}
+                      badge={href === '/history' ? count : undefined}
+                      collapsed={false}
+                      showNew={showNew(href, isNew)}
+                      onSelect={() => markSeen(href)}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
 
-          {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Docs link */}
-          <div className="border-t border-white/[0.05] px-2 py-3">
+          <div className="border-t border-white/[0.06] p-3">
             <a
               href="https://docs.genlayer.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-[7px]
-                         font-mono text-xs font-medium text-neutral-600
-                         hover:bg-white/[0.03] hover:text-neutral-300
-                         border border-transparent transition-all"
+              className="flex min-h-10 items-center gap-3 rounded-md px-3 py-2
+                         text-sm font-medium text-neutral-500
+                         transition-colors hover:bg-white/[0.03] hover:text-neutral-200"
             >
-              <BookOpen size={13} className="shrink-0" />
+              <BookOpen size={16} className="shrink-0" />
               <span className="flex-1">Docs</span>
-              <span className="text-[10px] opacity-40">↗</span>
+              <span className="text-xs opacity-50">↗</span>
             </a>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-white/[0.03] hover:text-neutral-300"
+              aria-label="Collapse sidebar"
+            >
+              <ChevronLeft size={16} />
+              <span>Collapse</span>
+            </button>
           </div>
         </div>
       )}
 
       {/* ── COLLAPSED ──────────────────────────────────────────────────────── */}
       {!open && (
-        <div className="flex flex-1 flex-col items-center gap-1.5 py-4">
+        <div className="flex flex-1 flex-col items-center gap-2 py-4">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="mb-2 flex h-9 w-9 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-white/[0.04] hover:text-neutral-200"
+            aria-label="Expand sidebar"
+          >
+            <ChevronRight size={16} />
+          </button>
           {NAV_ITEMS.map(({ href, label, Icon, soon, isNew }) => (
             <NavItem
               key={href}

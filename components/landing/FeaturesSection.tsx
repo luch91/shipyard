@@ -14,7 +14,7 @@ const stagger = {
 }
 
 const glassCard =
-  'relative rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-emerald-400/[0.04] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:border-emerald-500/20'
+  'relative rounded-lg border border-white/[0.08] bg-[#101411] p-6 transition-colors duration-200 hover:border-white/[0.14]'
 
 function IconBox({ icon: Icon }: { icon: React.ElementType }) {
   return (
@@ -36,7 +36,7 @@ export default function FeaturesSection() {
         initial={initial}
         whileInView="visible"
         viewport={{ once: true, margin: '-80px' }}
-        className="mb-12 text-center"
+        className="mb-12 max-w-2xl"
       >
         <motion.span
           variants={fadeUp}
@@ -46,7 +46,7 @@ export default function FeaturesSection() {
         </motion.span>
         <motion.h2
           variants={fadeUp}
-          className="mt-3 font-[Syne] font-bold text-white"
+          className="mt-3 font-semibold tracking-[-0.03em] text-white"
           style={{ fontSize: 'clamp(24px, 3vw, 36px)' }}
         >
           Everything you need. Nothing you don&apos;t.

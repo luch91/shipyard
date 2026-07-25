@@ -22,7 +22,7 @@ export default function TerminalSpotlight() {
   return (
     <div>
       {/* Pre-label */}
-      <div className="mb-10 text-center">
+      <div className="mb-10">
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400">
           Live Deploy Logs
         </span>
@@ -37,7 +37,7 @@ export default function TerminalSpotlight() {
           viewport={{ once: true, margin: '-80px' }}
         >
           <h2
-            className="mb-4 font-[Syne] font-extrabold leading-[1.1] tracking-[-0.02em] text-white"
+            className="mb-4 font-semibold leading-[1.1] tracking-[-0.03em] text-white"
             style={{ fontSize: 'clamp(24px, 3vw, 36px)' }}
           >
             Watch your contract land in real time.
@@ -50,13 +50,14 @@ export default function TerminalSpotlight() {
 
         {/* Right: static terminal */}
         <motion.div
-          initial={shouldReduce ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={shouldReduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="min-w-0"
         >
           <div
-            className="overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-emerald-400/[0.04] shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl"
+            className="overflow-hidden rounded-lg border border-white/[0.09] bg-[#101411] shadow-[0_18px_50px_rgba(0,0,0,0.22)]"
             style={{ borderLeft: '2px solid rgba(52, 211, 153, 0.5)' }}
           >
             {/* Top bar */}

@@ -4,17 +4,24 @@
 
 /* Fira Code — monospace */
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap');
-/* Syne — sans */
+/* Inter — interface; Syne — brand display */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
     color-scheme: dark;
+    --shipyard-bg: #080b09;
+    --shipyard-surface: #101411;
+    --shipyard-surface-raised: #151a16;
+    --shipyard-border: rgba(255, 255, 255, 0.08);
+    --shipyard-border-strong: rgba(255, 255, 255, 0.13);
+    --shipyard-accent: #34d399;
   }
 
   html {
     @apply bg-neutral-950 text-white;
-    font-family: 'Syne', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
 
   code,
@@ -126,42 +133,28 @@
 
 /* Glass card — applied via Card.tsx, replaces flat neutral-900 */
 .glass-card {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.04),
-    rgba(52, 211, 153, 0.03)
-  );
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.35),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  background: var(--shipyard-surface);
+  border: 1px solid var(--shipyard-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
 }
 
 .glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.11);
+  border-color: var(--shipyard-border-strong);
 }
 
 /* Emerald glass — for active/selected/highlighted states */
 .glass-card-emerald {
   border-color: rgba(52, 211, 153, 0.2);
-  background: linear-gradient(
-    135deg,
-    rgba(52, 211, 153, 0.06),
-    rgba(52, 211, 153, 0.02)
-  );
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(52, 211, 153, 0.1);
+  background: #101814;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.06);
 }
 
 /* Glass input — subtle depth on form fields */
 .glass-input {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: #0c100d;
+  border: 1px solid var(--shipyard-border);
+  border-radius: 6px;
   color: #ffffff;
   font-family: 'Fira Code', monospace;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -174,18 +167,19 @@
 .glass-input:focus {
   outline: none;
   border-color: rgba(52, 211, 153, 0.45);
-  background: rgba(255, 255, 255, 0.06);
+  background: #0f1511;
 }
 
-/* Sidebar ambient glow — static, single radial at top, very subtle */
+/* Sidebar uses a stable surface; status color provides the visual hierarchy. */
 .sidebar-glow {
-  background:
-    radial-gradient(
-      ellipse 140px 80px at 50% 0%,
-      rgba(52, 211, 153, 0.05) 0%,
-      transparent 70%
-    ),
-    #090909;
+  background: var(--shipyard-bg);
+}
+
+.app-panel {
+  background: var(--shipyard-surface);
+  border: 1px solid var(--shipyard-border);
+  border-radius: 10px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
 }
 
 /* Step badge — deploy page step labels (01 / 02 / 03) */
@@ -193,10 +187,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 22px;
-  min-width: 22px;
-  padding: 0 5px;
-  border-radius: 5px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
   background: rgba(52, 211, 153, 0.08);
   border: 1px solid rgba(52, 211, 153, 0.2);
   font-family: 'Fira Code', monospace;

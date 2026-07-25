@@ -169,12 +169,13 @@ export default function ContractUploader() {
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="font-mono text-sm font-semibold text-neutral-300">
-        1. Contract Source
-      </h2>
+      <div className="flex items-center gap-2">
+        <span className="step-badge">01</span>
+        <h2 className="text-sm font-semibold text-neutral-100">Contract Source</h2>
+      </div>
 
       {showEditor ? (
-        <div className="overflow-hidden rounded-lg border border-neutral-800">
+        <div className="overflow-hidden rounded-lg border border-white/[0.09] bg-[#0c100d]">
           <div className="flex items-center gap-2 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
             <FileCode size={13} className="text-emerald-400" />
             <span className="font-mono text-xs text-neutral-400">contract.py</span>
@@ -233,7 +234,7 @@ export default function ContractUploader() {
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-neutral-800">
+        <div className="overflow-hidden rounded-lg border border-white/[0.09] bg-[#0c100d]">
           {/* Tab bar */}
           <div className="flex border-b border-neutral-800 bg-neutral-900/50">
             {tabs.map((tab) => (
@@ -242,7 +243,7 @@ export default function ContractUploader() {
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={clsx(
-                  'flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors',
+                  'flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors',
                   activeTab === tab.id
                     ? 'border-b-2 border-emerald-500 text-emerald-400 -mb-px'
                     : 'text-neutral-500 hover:text-neutral-300'
@@ -273,10 +274,10 @@ export default function ContractUploader() {
               >
                 <Upload size={28} className={isDragging ? 'text-emerald-500' : 'text-neutral-600'} />
                 <div>
-                  <p className="text-sm font-medium text-neutral-400">
+                  <p className="text-sm font-medium text-neutral-300">
                     Drop your <span className="font-mono text-emerald-400">.py</span> contract here
                   </p>
-                  <p className="mt-1 text-xs text-neutral-600">or click to browse</p>
+                  <p className="mt-1 text-sm text-neutral-500">or click to browse</p>
                 </div>
               </div>
               <input
