@@ -14,7 +14,7 @@ export default function MobileTopBar() {
 
   // Landing has its own Header. The admin control room is intentionally
   // standalone on mobile as well as desktop.
-  if (pathname === '/' || pathname.startsWith('/admin') || pathname === '/blog' || pathname.startsWith('/blog/')) return null
+  if (pathname === '/' || pathname.startsWith('/admin') || pathname === '/blog' || pathname.startsWith('/blog/') || pathname === '/terms' || pathname === '/privacy') return null
 
   const goBack = () => {
     // Fall back to the app home when there's no in-app history to pop

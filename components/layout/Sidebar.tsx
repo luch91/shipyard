@@ -114,7 +114,7 @@ export default function Sidebar() {
 
   // Landing has its own header, and the admin control room uses a standalone
   // shell rather than the public app navigation.
-  if (pathname === '/' || pathname.startsWith('/admin') || pathname === '/blog' || pathname.startsWith('/blog/')) return null
+  if (pathname === '/' || pathname.startsWith('/admin') || pathname === '/blog' || pathname.startsWith('/blog/') || pathname === '/terms' || pathname === '/privacy') return null
 
   const isActive = (href: string) => {
     if (href === '/history') return pathname === '/history'
