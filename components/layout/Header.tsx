@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ExternalLink } from 'lucide-react'
 import GithubIcon from '@/components/ui/GithubIcon'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import Logo from './Logo'
@@ -22,25 +21,16 @@ export default function Header() {
 
         {/* Landing nav */}
         <nav className="flex items-center gap-4">
-          {/* Docs + GitHub hidden on small screens — CTA is the priority */}
+          {/* GitHub is hidden on small screens. The CTA is the priority. */}
           <Link
             href="/blog"
             className="hidden text-sm font-medium text-neutral-400 transition-colors hover:text-white sm:block"
           >
             Blog
           </Link>
+
           <a
-            href="https://docs.genlayer.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden items-center gap-1 text-sm font-medium text-neutral-400 transition-colors hover:text-white sm:flex"
-            aria-label="Open GenLayer docs in new tab"
-          >
-            Docs
-            <ExternalLink size={12} />
-          </a>
-          <a
-            href="https://github.com/genlayerlabs"
+            href="https://github.com/luch91/shipyard"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden items-center gap-1 text-sm font-medium text-neutral-400 transition-colors hover:text-white sm:flex"

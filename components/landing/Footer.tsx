@@ -31,7 +31,7 @@ export default function Footer() {
             Docs
           </a>
           <a
-            href="https://github.com/luch91/shipyard"
+            href="https://github.com/genlayerlabs"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-neutral-300"
