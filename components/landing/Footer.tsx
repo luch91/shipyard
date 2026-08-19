@@ -38,6 +38,14 @@ export default function Footer() {
           >
             GitHub
           </a>
+          <a
+            href="https://x.com/genshipyard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-neutral-300"
+          >
+            X
+          </a>
         </nav>
       </div>
 
