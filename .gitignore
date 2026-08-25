@@ -34,6 +34,7 @@ supabase/.temp/
 # Internal planning (not shipped)
 ROADMAP.md
 CLARKE-QUEST-PRD.md
+skills/PLAN.md
 
 .env*
 !.env.local.example
