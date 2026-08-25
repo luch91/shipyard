@@ -69,14 +69,15 @@ export async function writeContractMethodWithProvider(
   provider: any,
   contractAddress: string,
   methodName: string,
-  args: unknown[] = []
+  args: unknown[] = [],
+  value: bigint = BigInt(0)
 ): Promise<string> {
   const client = await createSignerClientWithProvider(networkId, address, provider)
   const hash = await client.writeContract({
     address: contractAddress as `0x${string}`,
     functionName: methodName,
     args,
-    value: BigInt(0),
+    value,
   })
   return hash as string
 }

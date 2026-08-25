@@ -101,16 +101,18 @@ function parseConstructorParams(source: string): ContractParam[] {
 function parseMethods(source: string): ContractMethod[] {
   const methods: ContractMethod[] = []
 
-  // Match @gl.public.view or @gl.public.write followed by a def on the next line(s)
+  // Match @gl.public.view, @gl.public.write, or @gl.public.write.payable
+  // followed by a def on the next line(s).
   const methodRegex =
-    /(@gl\.public\.(view|write))\s*\n\s*def\s+(\w+)\s*\(self(?:,\s*([^)]*))?\)\s*(?:->\s*([\w\[\], ]+?))?\s*:/gm
+    /(@gl\.public\.(view|write)(\.payable)?)\s*\n\s*def\s+(\w+)\s*\(self(?:,\s*([^)]*))?\)\s*(?:->\s*([\w\[\], ]+?))?\s*:/gm
 
   let match: RegExpExecArray | null
   while ((match = methodRegex.exec(source)) !== null) {
     const methodType = match[2] === 'view' ? 'read' : 'write'
-    const methodName = match[3]
-    const paramsRaw = match[4] ? match[4].trim() : ''
-    const returnType = match[5] ? match[5].trim() : 'None'
+    const payable = methodType === 'write' && match[3] === '.payable'
+    const methodName = match[4]
+    const paramsRaw = match[5] ? match[5].trim() : ''
+    const returnType = match[6] ? match[6].trim() : 'None'
 
     const params: ContractParam[] = []
     if (paramsRaw) {
@@ -148,7 +150,7 @@ function parseMethods(source: string): ContractMethod[] {
     const docstringMatch = afterDef.match(/^\s*"""([\s\S]*?)"""/)
     const docstring = docstringMatch ? docstringMatch[1].trim() : undefined
 
-    methods.push({ name: methodName, type: methodType, params, returnType, docstring })
+    methods.push({ name: methodName, type: methodType, payable, params, returnType, docstring })
   }
 
   return methods

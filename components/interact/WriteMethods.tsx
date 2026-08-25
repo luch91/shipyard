@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Wallet } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { parseEther } from 'viem'
 import type { ContractMethod } from '@/types'
 import { useWriteMethod } from '@/hooks/useContract'
 import Card from '@/components/ui/Card'
@@ -20,6 +21,8 @@ function WriteMethodCard({
   const { execute, loading, txHash, error } = useWriteMethod(contractAddress, method.name)
   const { isConnected } = useAccount()
   const [args, setArgs] = useState<Record<string, string>>({})
+  const [value, setValue] = useState('')
+  const [valueError, setValueError] = useState<string | null>(null)
 
   const handleExecute = () => {
     const argsArray = method.params.map((p) => {
@@ -35,7 +38,19 @@ function WriteMethodCard({
         default: return raw
       }
     })
-    execute(argsArray)
+    let valueWei = BigInt(0)
+    if (method.payable) {
+      try {
+        const amount = value.trim() || '0'
+        if (amount.startsWith('-')) throw new Error('negative amount')
+        valueWei = parseEther(amount)
+        setValueError(null)
+      } catch {
+        setValueError('Enter a valid GEN amount with up to 18 decimal places.')
+        return
+      }
+    }
+    execute(argsArray, undefined, valueWei)
   }
 
   return (
@@ -43,7 +58,7 @@ function WriteMethodCard({
       <div className="mb-3 flex items-center gap-2">
         <span className="font-mono text-sm font-semibold text-white">{method.name}</span>
         <span className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[11px] text-amber-400">
-          write
+          {method.payable ? 'payable write' : 'write'}
         </span>
         {method.docstring && (
           <span className="text-xs text-neutral-600" title={method.docstring}>ⓘ</span>
@@ -69,6 +84,35 @@ function WriteMethodCard({
             </div>
           ))}
         </div>
+      )}
+
+      {method.payable && (
+        <div className="mb-3 flex items-center gap-2">
+          <label htmlFor={`value-${method.name}`} className="w-24 shrink-0 font-mono text-xs text-neutral-500">
+            amount <span className="ml-1 text-neutral-700">:GEN</span>
+          </label>
+          <input
+            id={`value-${method.name}`}
+            type="number"
+            min="0"
+            step="any"
+            inputMode="decimal"
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value)
+              setValueError(null)
+            }}
+            placeholder="0"
+            className="flex-1 rounded-md border border-amber-500/30 bg-neutral-800 px-2 py-1.5 font-mono text-xs text-white placeholder-neutral-600 focus:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+            aria-label="GEN amount"
+          />
+        </div>
+      )}
+
+      {valueError && (
+        <p className="mb-3 rounded-md bg-red-500/5 px-3 py-2 font-mono text-xs text-red-400">
+          {valueError}
+        </p>
       )}
 
       {!isConnected ? (

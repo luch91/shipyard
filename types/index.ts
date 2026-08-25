@@ -34,6 +34,7 @@ export interface ContractParam {
 export interface ContractMethod {
   name: string
   type: 'read' | 'write'
+  payable?: boolean
   params: ContractParam[]
   returnType: string
   docstring?: string

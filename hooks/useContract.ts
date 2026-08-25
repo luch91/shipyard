@@ -50,7 +50,7 @@ export function useWriteMethod(contractAddress: string, methodName: string) {
   const [error, setError] = useState<string | null>(null)
 
   const execute = useCallback(
-    async (args: string[] = [], networkOverride?: NetworkId) => {
+    async (args: string[] = [], networkOverride?: NetworkId, value: bigint = BigInt(0)) => {
       if (!isConnected || !address || !connector) {
         setError('Please connect your wallet first.')
         return
@@ -76,7 +76,15 @@ export function useWriteMethod(contractAddress: string, methodName: string) {
       track('write_method_executed', { method_name: methodName, network })
 
       try {
-        const hash = await writeContractMethodWithProvider(network, address, provider, contractAddress, methodName, args)
+        const hash = await writeContractMethodWithProvider(
+          network,
+          address,
+          provider,
+          contractAddress,
+          methodName,
+          args,
+          value
+        )
         setTxHash(hash)
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Transaction failed.'
