@@ -15,6 +15,7 @@
 import { execFileSync } from 'node:child_process'
 
 const BRANCH = 'main'
+const CANONICAL_PRODUCTION_URL = 'https://genshipyard.com'
 
 function git(...args) {
   return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
@@ -91,4 +92,4 @@ if (head !== remote) {
   )
 }
 
-console.log(`\n  ✓ clean tree, ${BRANCH} @ ${head.slice(0, 7)} in sync with origin — deploying.\n`)
+console.log(`\n  ✓ clean tree, ${BRANCH} @ ${head.slice(0, 7)} in sync with origin — deploying to ${CANONICAL_PRODUCTION_URL}.\n`)
