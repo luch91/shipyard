@@ -28,6 +28,7 @@ export const NETWORKS: Record<NetworkId, Network> = {
     chainId: 61999,
     isLive: true,
     description: 'Browser-based Studio environment',
+    explorerUrl: 'https://explorer-studio.genlayer.com',
   },
   localnet: {
     id: 'localnet',
