@@ -46,7 +46,7 @@
         "DEPLOYMENT_ENV": "production"
       },
       "triggers": {
-        "crons": []
+        "crons": ["10 0 * * *"]
       }
     }
   }
