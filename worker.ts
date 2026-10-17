@@ -17,7 +17,9 @@ const shipyardWorker = {
   },
 
   async scheduled(_controller: CronController, env: ShipyardEnv, ctx: WorkerContext) {
-    const request = new Request('https://internal.shipyard/api/cron/rollup', {
+    // This stays in-process through vinext's handler, but must use the canonical
+    // host so production host-enforcement middleware does not turn it into a 308.
+    const request = new Request('https://genshipyard.com/api/cron/rollup', {
       headers: { authorization: `Bearer ${env.CRON_SECRET}` },
     })
     const response = await handler.fetch(request, env, ctx)
