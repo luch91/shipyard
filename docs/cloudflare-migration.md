@@ -81,9 +81,61 @@ DNS TTLs should be lowered before the approved cutover and restored afterward. N
 
 ## Known blockers and risks
 
-- The restored Shipyard Supabase service is reachable and database-backed staging APIs pass. The Supabase CLI account still does not list the project, so dashboard logs and project-level administration are unavailable from this session.
-- Vercel CLI access is restored and confirms a promoted READY deployment, 12 production variables, three production aliases, and one active daily Vercel Cron. The separate workspace Vercel connector still returns 403, so the audit uses CLI evidence.
-- Actual wallet signatures and state-changing GenLayer deployments require an interactive funded wallet and must be completed during acceptance testing.
+- The restored Shipyard Supabase service is reachable and database-backed staging APIs pass. A complete pre-backfill export of both analytics tables is stored outside the repository and has been verified by row count, unique primary keys, JSON parsing, and SHA-256.
+- Vercel CLI access is restored and confirms the production aliases. Runtime logs show the last Vercel Cron requests on 2026-10-08 through 2026-10-10; each stopped at middleware with HTTP 308, and no later invocation was found. Cloudflare production has no Cron Trigger.
+- Real SIWE authentication (including nonce replay rejection) and real Studionet deploy/read/write/finalisation workflows passed on staging.
 - A transitive wallet dependency (`valtio` via `use-sync-external-store`) declares React support only through React 18. Tests/build pass on React 19, but wallet acceptance testing remains required.
 - The dependency audit currently reports moderate/high advisories but no critical advisories; the existing CI policy continues to gate critical findings.
 - The current Vercel-served `genshipyard.com` and `skills.genshipyard.com` return `402 DEPLOYMENT_DISABLED`, despite the underlying deployment being recorded as READY. The isolated Cloudflare production Worker itself is active and returns the configured canonical-host redirect. Full application behavior is verified on the equivalent staging Worker until custom domains are attached.
+- The Cloudflare account has no `genshipyard.com` zone. The current Wrangler OAuth grant has Zone Read but not Zone Edit/DNS Edit, so a pending full zone, assigned nameservers, DNS records, Custom Domains, and certificates cannot yet be prepared. Production cutover remains blocked until zone-management access is restored.
+
+## Cutover readiness audit — 2026-10-17
+
+### Frozen runtime candidate
+
+- Git commit: `1219384519df94f670de3ad388cac2c4924c4180`
+- Recorded deployable artifact SHA-256: `FFE07C816CD36B1E2442441BEFF5C20BD6F9BAE9AC14C949C7C6CF25C1EB8209`
+- Active production Worker version: `c8a82433-ef57-4c3a-b495-d769296f960b`
+- Code rollback version: `95b7fd37-a54b-4e34-9fe2-47c0f2c05102`
+- Both production versions identify the frozen Git commit in their annotations and have the same Cloudflare script ETag, `39f608b167ec52849f553c6d3c8b1061569099e684ae1e402137d6f3792f5d4a`.
+- The active version has `fetch` and `scheduled` handlers, production-compatible bindings, no attached Shipyard Custom Domain, and no active Cron Trigger.
+
+### Analytics recovery evidence
+
+- Before backfill: 3,758 raw rows, 95 distinct active UTC dates, first event `2026-06-18T08:59:58.504893Z`, last event `2026-10-08T22:37:03.866317Z`, and one zero-event rollup dated 2026-10-16. The earlier estimate of 98 active dates was incorrect.
+- Backup: `C:\Users\user\ShipyardMigrationBackups\shipyard-analytics-before-rollup-2026-10-17.json`, 1,847,485 bytes, SHA-256 `CAABEFF2536688DED2622C8D68CF2C9156BB925EF92744C84C1897BC8DDCE510`.
+- The export retains every column and primary key from `analytics_events` and `analytics_daily_rollups`; it can be restored with service-role upserts keyed by `id` and `date` respectively.
+- Canary: 2026-06-18 processed 32 events; an immediate replay kept exactly one rollup row and returned the same aggregate.
+- Backfill: all 95 active dates were invoked sequentially and independently compared with aggregates recomputed from the export. API errors: 0. Data discrepancies: 0. Service retries: 0.
+- After backfill: 3,758 raw rows; the canonical raw-table SHA-256 remained `51A9E17E2B118D025F7E87E821F90C96531E74E18ED030FCF70DA04D64C57E4B`. There are 95 active-date rollups plus the existing 2026-10-16 zero-event rollup, and no duplicate rollup dates.
+- There are no raw events from 2026-10-09 through 2026-10-17. No activity was fabricated for those dates.
+
+### DNS preparation
+
+- Current authority: `ns1.vercel-dns.com` and `ns2.vercel-dns.com`; registrar: Namecheap.
+- Registry RDAP reports `delegationSigned: false`, and a DNS-over-HTTPS DS query returns no DS answer. DNSSEC is currently disabled at the registrar.
+- Current records: apex ALIAS to `b5769d2283d37c07.vercel-dns-017.com`, wildcard ALIAS to `cname.vercel-dns-016.com`, and apex CAA entries for `pki.goog`, `sectigo.com`, and `letsencrypt.org`. No MX or TXT records were found.
+- Only `genshipyard.com`, `www.genshipyard.com`, and `skills.genshipyard.com` are assigned to the Vercel project; no continuing wildcard requirement was found.
+- Proposed pending Cloudflare zone: full setup with automatic import disabled. Recreate the three CAA records and allow Cloudflare to add any CAA authorization needed by its selected CA. Do not copy the Vercel ALIAS records as production destinations. Do not create wildcard routing.
+- Intended mappings: all three exact hostnames become Custom Domains of `shipyard-production`. Custom Domains require an active Cloudflare zone and create their own DNS records and certificates, so attachment and certificate validation must wait for an approved nameserver cutover.
+
+### Proposed cutover sequence (not yet authorised for execution)
+
+1. Grant Zone Edit and DNS Edit access, create the full `genshipyard.com` zone with automatic import disabled, record its zone ID and assigned nameservers, and add the preserved CAA records.
+2. Re-query authoritative Vercel DNS immediately before cutover and reconcile any new MX, TXT, CAA, verification, or unrelated records into the pending Cloudflare zone.
+3. Freeze commit `1219384519df94f670de3ad388cac2c4924c4180`; record Worker versions, bindings, analytics counts/checksums, Vercel records, registrar delegation, and rollback commands.
+4. Obtain explicit owner approval for the traffic change.
+5. At Namecheap, confirm DNSSEC remains disabled, then replace only the two Vercel nameservers with the exact Cloudflare-assigned pair. Expect resolver caches to continue using Vercel for up to the existing 86,400-second NS TTL; a nameserver rollback has the same propagation limitation.
+6. Wait for Cloudflare zone activation. If it does not activate, verify exact delegation and absence of DS records; revert nameservers if the cutover window expires.
+7. Attach exact Custom Domains for apex, `www`, and `skills` to `shipyard-production`. Verify Cloudflare-created DNS records, certificate issuance, and HTTPS for every hostname. Do not continue if any hostname has SERVFAIL, certificate errors, or routes outside the intended Worker.
+8. Run production smoke tests for pages/metadata, Supabase APIs, SIWE/replay rejection, GenLayer read/write/deploy, OpenRouter, Upstash rate limiting, admin access, analytics, and skills routing. Inspect Worker logs and error rates.
+9. Confirm Vercel Cron is disabled or otherwise not invoking. Only then configure exactly one Cloudflare trigger, `10 0 * * *`, and verify its first protected in-process rollup. Never run both schedulers concurrently.
+10. After an agreed observation window, re-enable DNSSEC in Cloudflare and publish Cloudflare's new DS record at Namecheap. Retain Vercel until production acceptance.
+
+### Recovery separation
+
+- Worker code rollback: `npx wrangler rollback 95b7fd37-a54b-4e34-9fe2-47c0f2c05102 --env production --yes`. This changes code only; bindings, domains, DNS, and schedules must be checked separately.
+- DNS/traffic rollback: remove or disable the Shipyard Custom Domains, restore the captured Vercel DNS records if Cloudflare remains authoritative, or restore Vercel nameservers at Namecheap. Propagation is not instantaneous.
+- Registrar rollback: restore `ns1.vercel-dns.com` and `ns2.vercel-dns.com`; verify the parent delegation and authoritative answers from multiple resolvers.
+- Scheduler rollback: disable Cloudflare Cron before restoring Vercel scheduling. A Worker code rollback does not change Cron Triggers.
+- Vercel currently returns `DEPLOYMENT_DISABLED` and is therefore not an immediately functional application rollback target; the tested Cloudflare Worker version is the primary code fallback.
