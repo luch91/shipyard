@@ -1,4 +1,4 @@
-# Cloudflare migration runbook
+# Cloudflare production runbook
 
 ## Current state
 
@@ -6,9 +6,26 @@
 - Adapter: vinext on Cloudflare Workers
 - Staging Worker: `shipyard-staging`
 - Staging URL: <https://shipyard-staging.judithorluchee.workers.dev>
-- Production DNS and traffic: unchanged; approval is required before cutover
-- Production Worker: `shipyard-production`, prepared at <https://shipyard-production.judithorluchee.workers.dev> with no custom domains or Cron Trigger
-- Production Worker runtime status: active; its `workers.dev` hostname deliberately redirects to the canonical production domain
+- Production Worker: `shipyard-production`
+- Production hostnames: <https://genshipyard.com>, <https://www.genshipyard.com>, and <https://skills.genshipyard.com>
+- Cloudflare zone: `feb967bcfa5f2e09b0d2713db2102028`, delegated to `garret.ns.cloudflare.com` and `mina.ns.cloudflare.com`
+- Production Worker version: `c8a82433-ef57-4c3a-b495-d769296f960b`
+- Frozen runtime commit: `1219384519df94f670de3ad388cac2c4924c4180`
+- Frozen artifact SHA-256: `FFE07C816CD36B1E2442441BEFF5C20BD6F9BAE9AC14C949C7C6CF25C1EB8209`
+- Production Cron Trigger: `10 0 * * *`; staging has no schedule
+- Vercel is retained as migration evidence and a configuration recovery source, but currently returns `402 DEPLOYMENT_DISABLED` and is not a live traffic fallback
+
+## Post-migration operations
+
+For availability checks, test all three public hostnames over HTTPS and confirm the apex and `skills` return 200 while `www` returns the intentional 308 redirect to the apex. Verify public NS answers through at least two independent recursive resolvers during propagation.
+
+Use Workers Observability for retained production errors and traces. Keep checks bounded to `shipyard-production`; do not enable broad log exports or change sampling during routine monitoring. Use `npx wrangler deployments status --name shipyard-production` to confirm the active version and `npx wrangler secret list --name shipyard-production` to verify secret names without retrieving values.
+
+The daily schedule runs at 00:10 UTC and rolls up the previous UTC date. After each run, verify exactly one row for that date, recompute the authoritative raw-event count for the date, and check the scheduled invocation logs. A repeated protected rollup is idempotent because the handler upserts on the unique `date`, but routine monitoring must not invoke it manually.
+
+Vercel still stores the former `10 0 * * *` Cron definition. It is operationally inactive while its deployment returns `DEPLOYMENT_DISABLED`. Before restoring or redeploying Vercel, disable either the Vercel or Cloudflare schedule so that only one scheduler can execute.
+
+Do not enable DNSSEC as part of stabilization. Enabling it requires a separate review of Cloudflare DNSSEC status and an intentional DS publication at Namecheap.
 
 ## Architecture and dependency inventory
 
@@ -54,32 +71,32 @@ npx wrangler deploy --dry-run --config dist/server/wrangler.json
 npx wrangler deploy --config dist/server/wrangler.json
 ```
 
-The generated Wrangler configuration in `dist/server/wrangler.json` is the deployable artifact. Staging and the pre-cutover production Worker are configured without Cron Triggers. At approved cutover, disable the Vercel schedule first, set the production environment trigger to `10 0 * * *`, rebuild with `CLOUDFLARE_ENV=production`, and deploy. This ordering prevents overlapping schedulers.
+The generated Wrangler configuration in `dist/server/wrangler.json` is the deployable artifact. Production configuration includes Cron `10 0 * * *`; staging must remain unscheduled. A vinext build can regenerate the deployable configuration, so inspect its trigger list before applying triggers. Never activate Vercel and Cloudflare scheduling simultaneously.
 
-## Cutover checklist
+## Production validation checklist
 
-1. Resolve the Supabase project access issue and install verified production bindings.
-2. Rebuild with verified public variables and deploy a production Worker without custom routes.
-3. Validate all database-backed, wallet, GenLayer, admin, AI, analytics, and handoff workflows on staging.
-4. Record current DNS records, including apex, `www`, `skills`, MX, TXT, CAA, and any verification records.
-5. Obtain explicit owner approval for the DNS/nameserver/traffic change.
-6. Attach only `genshipyard.com/*` and `skills.genshipyard.com/*` to the production Worker. Preserve every unrelated DNS record.
-7. Disable the Vercel analytics schedule before adding and deploying the production Worker trigger `10 0 * * *`, so the rollup runs once per interval.
-8. Run post-cutover smoke tests and inspect Worker error logs.
+1. Confirm apex and `skills` return 200 and `www` returns the canonical 308 over valid TLS.
+2. Confirm Cloudflare remains authoritative and all three Custom Domains still map to `shipyard-production`.
+3. Confirm Worker version `c8a82433-ef57-4c3a-b495-d769296f960b` and all 12 secret names.
+4. Check bounded Worker errors, request latency, and dependency failures.
+5. Exercise SIWE and replay rejection, Supabase reads, Upstash-backed controls, GenLayer RPC, OpenRouter, admin access, metadata, analytics, and skills routing without unnecessary state-changing transactions.
+6. Verify one Cloudflare schedule at `10 0 * * *`, its scheduled invocation, and the previous UTC day's rollup.
+7. Confirm the Vercel endpoint remains `DEPLOYMENT_DISABLED` and shows no competing Cron execution.
+8. Record incidents, evidence, corrective actions, and remaining risks in the stabilization report.
 
 ## Rollback
 
-Keep the last Vercel deployment and its domain configuration intact until production acceptance. If cutover validation fails:
+Keep the last Vercel deployment and its domain configuration intact during stabilization. If production validation fails:
 
-1. Remove or disable the two Cloudflare Worker routes/custom domains.
-2. Restore the recorded apex and `skills` records (or restore Vercel nameserver delegation if nameservers were changed).
-3. Confirm `genshipyard.com` and `skills.genshipyard.com` resolve to the known-good Vercel target.
-4. Disable the Cloudflare production Cron Trigger before re-enabling the Vercel schedule.
-5. Purge only affected Cloudflare cache entries and rerun smoke tests.
+1. For an application-code failure, redeploy the frozen artifact or select a tested Worker version. Version `95b7fd37-a54b-4e34-9fe2-47c0f2c05102` has the same script ETag as the active version, so it is not an independent defective-build fallback.
+2. Recheck bindings, Custom Domains and the Cron Trigger separately; Worker rollback does not restore connected resources or schedules.
+3. For DNS or certificate containment, keep Cloudflare authoritative where possible and repair the affected Custom Domain. Escalate before detaching production hostnames.
+4. Before any registrar rollback, disable Cloudflare Cron. Restore `ns1.vercel-dns.com` and `ns2.vercel-dns.com` only with owner approval and only after Vercel is made functional.
+5. Expect nameserver rollback to follow DNS propagation rather than taking effect immediately. Run complete smoke tests after recovery.
 
 DNS TTLs should be lowered before the approved cutover and restored afterward. No database rollback is required because this migration does not change the Supabase schema or data.
 
-## Known blockers and risks
+## Historical migration evidence and retained risks
 
 - The restored Shipyard Supabase service is reachable and database-backed staging APIs pass. A complete pre-backfill export of both analytics tables is stored outside the repository and has been verified by row count, unique primary keys, JSON parsing, and SHA-256.
 - Vercel CLI access is restored and confirms the production aliases. Runtime logs show the last Vercel Cron requests on 2026-10-08 through 2026-10-10; each stopped at middleware with HTTP 308, and no later invocation was found. Cloudflare production has no Cron Trigger.
