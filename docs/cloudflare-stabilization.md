@@ -19,6 +19,7 @@
 - Scheduling: one Cloudflare Cron at `10 0 * * *`. Vercel retains its definition but its endpoint returns `402 DEPLOYMENT_DISABLED`; no matching Vercel execution appeared in the preceding seven-day log window.
 - Opening incident: one local DNS lookup for `studio.genlayer.com` failed after a successful StudioNet RPC check during cutover. An independent Cloudflare DNS query returned both current addresses and a pinned RPC retry returned HTTP 200 with a block number in 1.83 seconds. Classified as a transient local-resolver failure; no application change was made.
 - DNSSEC intentionally remains disabled pending separate review.
+- Continuous read-only sampler: started 2026-10-17 14:49:50 UTC as process 43568, writing five-minute JSONL samples to `C:\Users\user\ShipyardMigrationBackups\shipyard-stabilization-health.jsonl` through the 72-hour endpoint. Its first sample recorded all three expected HTTP statuses, zero TLS failures, Cloudflare authority, and a healthy StudioNet block-number response. The PID is operational evidence only and may change if the host restarts; the JSONL record is authoritative.
 
 ## First-Cron report
 
