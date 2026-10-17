@@ -52,12 +52,14 @@ export async function rateLimit(
 }
 
 /**
- * The real client IP. On Vercel the edge appends the true client IP as the LAST
+ * The real client IP. Cloudflare supplies `CF-Connecting-IP`; on Vercel the edge appends the true client IP as the LAST
  * `x-forwarded-for` entry and mirrors it in `x-real-ip`, so neither is spoofable
  * by a client-supplied header — unlike the leftmost `x-forwarded-for` value, which
  * the client controls. Prefer `x-real-ip`, then the last forwarded entry.
  */
 export function getClientIp(req: Request): string {
+  const cloudflareIp = req.headers.get('cf-connecting-ip')?.trim()
+  if (cloudflareIp) return cloudflareIp
   const realIp = req.headers.get('x-real-ip')?.trim()
   if (realIp) return realIp
   const xff = req.headers.get('x-forwarded-for')

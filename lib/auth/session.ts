@@ -67,7 +67,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 // Read the current session (server-side). Returns the authenticated wallet or null.
 // Use this in Route Handlers to authorize writes against the signed-in wallet.
 export async function getSession(): Promise<SessionPayload | null> {
-  const token = cookies().get(SESSION_COOKIE)?.value
+  const token = (await cookies()).get(SESSION_COOKIE)?.value
   if (!token) return null
   return verifySessionToken(token)
 }
@@ -75,7 +75,7 @@ export async function getSession(): Promise<SessionPayload | null> {
 // Password-admin authentication is intentionally kept in a separate cookie so
 // entering or leaving /admin never replaces the user's wallet SIWE session.
 export async function getPasswordAdminSession(): Promise<SessionPayload | null> {
-  const token = cookies().get(ADMIN_SESSION_COOKIE)?.value
+  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value
   if (!token) return null
   const session = await verifySessionToken(token)
   return session?.admin === true ? session : null

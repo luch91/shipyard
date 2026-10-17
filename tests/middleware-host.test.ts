@@ -30,6 +30,21 @@ afterEach(() => {
 })
 
 describe('canonical-host middleware', () => {
+  it('does NOT redirect Cloudflare staging deployments', async () => {
+    vi.stubEnv('DEPLOYMENT_ENV', 'staging')
+    vi.stubEnv('NODE_ENV', 'production')
+    const res = await runMiddleware('shipyard-staging.example.workers.dev')
+    expect(isPassThrough(res)).toBe(true)
+  })
+
+  it('enforces canonical routing in Cloudflare production', async () => {
+    vi.stubEnv('DEPLOYMENT_ENV', 'production')
+    vi.stubEnv('NODE_ENV', 'production')
+    const res = await runMiddleware('shipyard.example.workers.dev', '/templates')
+    expect(res.status).toBe(308)
+    expect(res.headers.get('location')).toBe('https://genshipyard.com/templates')
+  })
+
   it('does NOT redirect preview deployments', async () => {
     vi.stubEnv('VERCEL_ENV', 'preview')
     vi.stubEnv('NODE_ENV', 'production') // what a preview build actually looks like

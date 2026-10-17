@@ -138,8 +138,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookie = headers().get('cookie')
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookie = (await headers()).get('cookie')
 
   return (
     <html lang="en" className="dark">

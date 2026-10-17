@@ -4,16 +4,11 @@ import type { NextRequest } from 'next/server'
 const CANONICAL_HOST = 'genshipyard.com'
 const SKILLS_HOST = 'skills.genshipyard.com'
 
-// Whether this is the real production deployment. NODE_ENV is 'production' for
-// every `next build`, including preview deployments, so testing it here sent
-// previews to the canonical host — i.e. straight to production — which made them
-// impossible to review. VERCEL_ENV ('production' | 'preview' | 'development')
-// is the signal that actually distinguishes them. Fall back to NODE_ENV when
-// VERCEL_ENV is absent (local builds, or system env vars not exposed) so the
-// canonical host stays enforced rather than silently switching off.
-const vercelEnv = process.env.VERCEL_ENV
-const IS_PRODUCTION_DEPLOYMENT = vercelEnv
-  ? vercelEnv === 'production'
+// Cloudflare sets this explicitly per Worker. Keep the Vercel fallback while the
+// old deployment remains available as a rollback target.
+const deploymentEnvironment = process.env.DEPLOYMENT_ENV ?? process.env.VERCEL_ENV
+const IS_PRODUCTION_DEPLOYMENT = deploymentEnvironment
+  ? deploymentEnvironment === 'production'
   : process.env.NODE_ENV === 'production'
 
 export function middleware(request: NextRequest) {

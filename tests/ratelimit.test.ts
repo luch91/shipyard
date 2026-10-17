@@ -10,6 +10,13 @@ function reqWith(headers: Record<string, string>): Request {
 }
 
 describe('getClientIp', () => {
+  it('prefers the Cloudflare-authenticated connecting IP', () => {
+    expect(getClientIp(reqWith({
+      'cf-connecting-ip': '203.0.113.8',
+      'x-real-ip': '198.51.100.2',
+    }))).toBe('203.0.113.8')
+  })
+
   it('prefers x-real-ip', () => {
     expect(getClientIp(reqWith({ 'x-real-ip': '203.0.113.7' }))).toBe('203.0.113.7')
   })

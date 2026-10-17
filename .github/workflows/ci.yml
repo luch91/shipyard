@@ -19,6 +19,11 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # Compile the same Workers artifact that is deployed by Wrangler. This is
+      # intentionally build-only: production deployment remains a manual,
+      # approval-gated operation.
+      - run: npm run build:vinext
+      - run: npx wrangler deploy --dry-run --config dist/server/wrangler.json
       # Fail only on CRITICAL advisories. The repo currently carries known
       # moderate/high transitive vulns in the wallet + eslint toolchains whose
       # fixes require breaking major bumps (tracked separately), so gating on

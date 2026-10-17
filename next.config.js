@@ -43,13 +43,7 @@ const cspReportOnly = [
 
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    serverComponentsExternalPackages: ['genlayer-js'],
-    // Enables instrumentation.ts (register() runs once at server startup) so we
-    // can log an env-configuration summary. Stable/default in Next 15; behind
-    // this flag on 14.2.
-    instrumentationHook: true,
-  },
+  serverExternalPackages: ['genlayer-js'],
   async headers() {
     return [
       {
@@ -78,4 +72,4 @@ const nextConfig = {
     ]
   },
 }
-module.exports = nextConfig
+export default nextConfig

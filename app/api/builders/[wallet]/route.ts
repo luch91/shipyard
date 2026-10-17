@@ -31,12 +31,13 @@ export type BuilderProfileResponse = {
 // early-stage app; bounds the query so a profile read stays cheap.
 const EVENT_SCAN_LIMIT = 2000
 
-export async function GET(_req: NextRequest, { params }: { params: { wallet: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ wallet: string }> }) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
   }
 
-  const wallet = (params.wallet ?? '').toLowerCase()
+  const { wallet: walletParam } = await params
+  const wallet = (walletParam ?? '').toLowerCase()
   if (!wallet) {
     return NextResponse.json({ error: 'wallet is required.' }, { status: 400 })
   }

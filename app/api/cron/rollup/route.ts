@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server'
 import { collectPaginatedRows } from '@/lib/analytics/paginate'
 
-// Daily analytics rollup. Triggered by Vercel Cron (once a day) — see vercel.json.
+// Daily analytics rollup. Triggered by the platform scheduler once a day.
 // Aggregates a single day's analytics_events into one analytics_daily_rollups row.
-// Protected by CRON_SECRET: Vercel automatically sends `Authorization: Bearer
-// <CRON_SECRET>` for cron requests, so the public can't trigger it.
+// Protected by CRON_SECRET so the public cannot trigger it.
 
 export const dynamic = 'force-dynamic'
 

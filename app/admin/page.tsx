@@ -126,7 +126,7 @@ const shortDate = (d: string) => {
 }
 
 // Measure a container's pixel width so SVG charts render crisp (no viewBox distortion).
-function useWidth<T extends HTMLElement>(): [React.RefObject<T>, number] {
+function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
   const ref = useRef<T>(null)
   const [w, setW] = useState(0)
   useEffect(() => {

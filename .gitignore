@@ -42,3 +42,8 @@ skills/PLAN.md
 # Generated launch-video artifacts (/brag)
 brag-output/
 brag-output-*/
+/dist/
+.vinext/
+.cloudflare/
+.wrangler/
+.dev.vars*

@@ -1,0 +1,44 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shipyard",
+  "compatibility_date": "2026-10-17",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "./worker.ts",
+  "workers_dev": true,
+  "vars": {
+    "DEPLOYMENT_ENV": "production"
+  },
+  "triggers": {
+    "crons": ["10 0 * * *"]
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true },
+    "traces": { "enabled": true },
+    "redact_query_string": true
+  },
+  "assets": {
+    "directory": "dist/client",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/*",
+      "!/_next/static/*",
+      "!/*/_next/static/*"
+    ]
+  },
+  "env": {
+    "staging": {
+      "name": "shipyard-staging",
+      "vars": {
+        "DEPLOYMENT_ENV": "staging"
+      },
+      "triggers": {
+        "crons": []
+      }
+    }
+  }
+}
