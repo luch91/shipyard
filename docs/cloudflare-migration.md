@@ -8,7 +8,7 @@
 - Staging URL: <https://shipyard-staging.judithorluchee.workers.dev>
 - Production DNS and traffic: unchanged; approval is required before cutover
 - Production Worker: `shipyard-production`, prepared at <https://shipyard-production.judithorluchee.workers.dev> with no custom domains or Cron Trigger
-- Production Worker runtime status: Cloudflare currently returns `402 DEPLOYMENT_DISABLED`; account enablement must be resolved before cutover
+- Production Worker runtime status: active; its `workers.dev` hostname deliberately redirects to the canonical production domain
 
 ## Architecture and dependency inventory
 
@@ -86,4 +86,4 @@ DNS TTLs should be lowered before the approved cutover and restored afterward. N
 - Actual wallet signatures and state-changing GenLayer deployments require an interactive funded wallet and must be completed during acceptance testing.
 - A transitive wallet dependency (`valtio` via `use-sync-external-store`) declares React support only through React 18. Tests/build pass on React 19, but wallet acceptance testing remains required.
 - The dependency audit currently reports moderate/high advisories but no critical advisories; the existing CI policy continues to gate critical findings.
-- Cloudflare accepted and deployed the isolated production Worker and its secrets, but requests are intercepted with `402 DEPLOYMENT_DISABLED`. Staging remains healthy with the same artifact. Resolve the Cloudflare account/deployment entitlement before attaching production traffic.
+- The current Vercel-served `genshipyard.com` and `skills.genshipyard.com` return `402 DEPLOYMENT_DISABLED`, despite the underlying deployment being recorded as READY. The isolated Cloudflare production Worker itself is active and returns the configured canonical-host redirect. Full application behavior is verified on the equivalent staging Worker until custom domains are attached.
