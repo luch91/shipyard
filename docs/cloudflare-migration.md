@@ -7,7 +7,8 @@
 - Staging Worker: `shipyard-staging`
 - Staging URL: <https://shipyard-staging.judithorluchee.workers.dev>
 - Production DNS and traffic: unchanged; approval is required before cutover
-- Production Worker: not deployed while the Supabase dependency is unresolved
+- Production Worker: `shipyard-production`, prepared at <https://shipyard-production.judithorluchee.workers.dev> with no custom domains or Cron Trigger
+- Production Worker runtime status: Cloudflare currently returns `402 DEPLOYMENT_DISABLED`; account enablement must be resolved before cutover
 
 ## Architecture and dependency inventory
 
@@ -53,7 +54,7 @@ npx wrangler deploy --dry-run --config dist/server/wrangler.json
 npx wrangler deploy --config dist/server/wrangler.json
 ```
 
-The generated Wrangler configuration in `dist/server/wrangler.json` is the deployable artifact. Staging is configured without Cron Triggers. Production contains one daily trigger and must not coexist with the Vercel schedule after cutover.
+The generated Wrangler configuration in `dist/server/wrangler.json` is the deployable artifact. Staging and the pre-cutover production Worker are configured without Cron Triggers. At approved cutover, disable the Vercel schedule first, set the production environment trigger to `10 0 * * *`, rebuild with `CLOUDFLARE_ENV=production`, and deploy. This ordering prevents overlapping schedulers.
 
 ## Cutover checklist
 
@@ -63,7 +64,7 @@ The generated Wrangler configuration in `dist/server/wrangler.json` is the deplo
 4. Record current DNS records, including apex, `www`, `skills`, MX, TXT, CAA, and any verification records.
 5. Obtain explicit owner approval for the DNS/nameserver/traffic change.
 6. Attach only `genshipyard.com/*` and `skills.genshipyard.com/*` to the production Worker. Preserve every unrelated DNS record.
-7. Disable the Vercel analytics schedule before enabling the production Worker trigger, so the rollup runs once per interval.
+7. Disable the Vercel analytics schedule before adding and deploying the production Worker trigger `10 0 * * *`, so the rollup runs once per interval.
 8. Run post-cutover smoke tests and inspect Worker error logs.
 
 ## Rollback
@@ -80,8 +81,9 @@ DNS TTLs should be lowered before the approved cutover and restored afterward. N
 
 ## Known blockers and risks
 
-- The configured Shipyard Supabase hostname currently returns NXDOMAIN, and the authenticated Supabase account does not list that project. Database-backed APIs cannot pass until access to the correct project and its current credentials is restored.
-- Vercel CLI authentication is not authorized in the current session. Project metadata is available from the repository link, but the authoritative Vercel environment and deployment history could not be exported or compared.
+- The restored Shipyard Supabase service is reachable and database-backed staging APIs pass. The Supabase CLI account still does not list the project, so dashboard logs and project-level administration are unavailable from this session.
+- Vercel CLI access is restored and confirms a promoted READY deployment, 12 production variables, three production aliases, and one active daily Vercel Cron. The separate workspace Vercel connector still returns 403, so the audit uses CLI evidence.
 - Actual wallet signatures and state-changing GenLayer deployments require an interactive funded wallet and must be completed during acceptance testing.
 - A transitive wallet dependency (`valtio` via `use-sync-external-store`) declares React support only through React 18. Tests/build pass on React 19, but wallet acceptance testing remains required.
 - The dependency audit currently reports moderate/high advisories but no critical advisories; the existing CI policy continues to gate critical findings.
+- Cloudflare accepted and deployed the isolated production Worker and its secrets, but requests are intercepted with `402 DEPLOYMENT_DISABLED`. Staging remains healthy with the same artifact. Resolve the Cloudflare account/deployment entitlement before attaching production traffic.

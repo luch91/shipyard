@@ -11,7 +11,7 @@
     "DEPLOYMENT_ENV": "production"
   },
   "triggers": {
-    "crons": ["10 0 * * *"]
+    "crons": []
   },
   "observability": {
     "enabled": true,
@@ -35,6 +35,15 @@
       "name": "shipyard-staging",
       "vars": {
         "DEPLOYMENT_ENV": "staging"
+      },
+      "triggers": {
+        "crons": []
+      }
+    },
+    "production": {
+      "name": "shipyard-production",
+      "vars": {
+        "DEPLOYMENT_ENV": "production"
       },
       "triggers": {
         "crons": []
